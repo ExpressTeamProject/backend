@@ -1,0 +1,68 @@
+헤로쿠 배포 시 사용할 것으로 예상되어 작성함.
+
+# Heroku 루트 디렉토리에 Procfile 생성
+echo "web: npm start --prefix server" > Procfile
+
+# package.json을 루트 디렉토리에 생성 (Heroku 배포용)
+cat > package.json << EOL
+{
+  "name": "mern-app",
+  "version": "1.0.0",
+  "description": "MERN Stack Application with Express backend and React frontend",
+  "engines": {
+    "node": "16.x"
+  },
+  "scripts": {
+    "start": "npm start --prefix server",
+    "server": "npm run dev --prefix server",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client && npm install --prefix server"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^7.0.0"
+  }
+}
+EOL
+
+# .gitignore 파일 설정
+cat > .gitignore << EOL
+# 노드 모듈
+node_modules/
+/client/node_modules/
+/server/node_modules/
+
+# 빌드 파일
+/client/build/
+
+# 환경 변수
+.env
+/server/.env
+
+# 로그
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# 시스템 파일
+.DS_Store
+.idea/
+.vscode/
+
+# 테스트 커버리지
+/coverage/
+EOL
+
+# Heroku CLI 명령어 (배포 시 실행)
+# heroku login
+# heroku create your-app-name
+# git push heroku main
+
+# 환경 변수 설정 (배포 시 실행)
+# heroku config:set NODE_ENV=production
+# heroku config:set MONGO_URI=your_mongodb_atlas_uri
+# heroku config:set JWT_SECRET=your_jwt_secret
+# heroku config:set JWT_EXPIRE=30d
+# heroku config:set JWT_COOKIE_EXPIRE=30
