@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const swaggerConfig = require('./config/swagger');
 
 // 라우트 가져오기
 const authRoutes = require('./routes/authRoutes');
@@ -18,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-// 서버 스테이터스 확인용 임시 페이지 - API 라우트보다 먼저 정의
+// 서버 스테이터스 확인용 임시 페이지
 app.get('/server-status', (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -52,8 +53,8 @@ app.get('/server-status', (req, res) => {
         <h3>API 테스트:</h3>
         <p>다음 API 엔드포인트를 테스트해 볼 수 있습니다:</p>
         <ul>
-          <li><a href="/api/status" target="_blank">/api/status</a> - 서버 상태 JSON</li>
-          <li><a href="/api/auth" target="_blank">/api/auth</a> - 인증 API</li>
+          <li><a href="/status" target="_blank">/status</a> - 서버 상태 JSON</li>
+          <li><a href="/auth" target="_blank">/auth</a> - 인증 API</li>
         </ul>
       </div>
     </body>
@@ -62,7 +63,7 @@ app.get('/server-status', (req, res) => {
 });
 
 // API 상태 확인 엔드포인트
-app.get('/api/status', (req, res) => {
+app.get('/status', (req, res) => {
   res.json({
     status: 'online',
     timestamp: new Date(),
@@ -84,10 +85,11 @@ app.get('/test', (req, res) => {
 });
 
 // API 라우트
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/comments', commentRoutes);
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
+app.use('/posts', postRoutes);
+app.use('/comments', commentRoutes);
+app.use('/api-docs', swaggerConfig.serve, swaggerConfig.setup);
 
 // 배포 환경에서는 React 정적 파일 제공
 if (process.env.NODE_ENV === 'production') {
