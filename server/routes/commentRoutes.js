@@ -27,23 +27,285 @@ const commentController = {
   }
 };
 
-// 댓글 기본 라우트
+/**
+ * @swagger
+ * /comments:
+ *   post:
+ *     summary: 댓글 생성
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *               - postId
+ *             properties:
+ *               content:
+ *                 type: string
+ *               postId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: 댓글 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: 게시글을 찾을 수 없음
+ */
 router.route('/')
   .post(protect, commentController.createComment);
 
-// 특정 댓글 라우트
+/**
+ * @swagger
+ * /comments/{id}:
+ *   get:
+ *     summary: 특정 댓글 가져오기
+ *     tags: [Comments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 댓글 ID
+ *     responses:
+ *       200:
+ *         description: 댓글 정보
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+/**
+ * @swagger
+ * /comments/{id}:
+ *   put:
+ *     summary: 댓글 수정
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 댓글 ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 댓글 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+/**
+ * @swagger
+ * /comments/{id}:
+ *   delete:
+ *     summary: 댓글 삭제
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 댓글 ID
+ *     responses:
+ *       200:
+ *         description: 댓글 삭제 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data: 
+ *                   type: object
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.route('/:id')
   .get(commentController.getComment)
   .put(protect, commentController.updateComment)
   .delete(protect, commentController.deleteComment);
 
-// 게시글별 댓글 가져오기
+/**
+ * @swagger
+ * /comments/post/{postId}:
+ *   get:
+ *     summary: 게시글별 댓글 가져오기
+ *     tags: [Comments]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 게시글 ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 페이지당 댓글 수
+ *     responses:
+ *       200:
+ *         description: 게시글의 댓글 목록
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 pagination:
+ *                   type: object
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Comment'
+ *       404:
+ *         description: 게시글을 찾을 수 없음
+ */
 router.get('/post/:postId', commentController.getPostComments);
 
-// 대댓글 작성
+/**
+ * @swagger
+ * /comments/reply/{commentId}:
+ *   post:
+ *     summary: 대댓글 작성
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: commentId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 부모 댓글 ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: 대댓글 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: 댓글을 찾을 수 없음
+ */
 router.post('/reply/:commentId', protect, commentController.createReply);
 
-// 댓글 좋아요/좋아요 취소
+/**
+ * @swagger
+ * /comments/{id}/like:
+ *   put:
+ *     summary: 댓글 좋아요/좋아요 취소
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 댓글 ID
+ *     responses:
+ *       200:
+ *         description: 좋아요/좋아요 취소 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.put('/:id/like', protect, commentController.toggleLike);
 
 module.exports = router;

@@ -3,32 +3,301 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
-// POST /api/auth/register - 회원가입
+/**
+ * @swagger
+ * tags:
+ *   - name: Auth
+ *     description: 인증 관련 API
+ *   - name: Users
+ *     description: 사용자 관리 API
+ *   - name: Posts
+ *     description: 게시글 관련 API
+ *   - name: Comments
+ *     description: 댓글 관련 API
+ */
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: 회원가입
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - email
+ *               - password
+ *               - nickname
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               nickname:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: 회원가입 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: 유효하지 않은 입력값
+ */
 router.post('/register', authController.register);
 
-// POST /api/auth/login - 로그인
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: 로그인
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 로그인 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: 유효하지 않은 인증 정보
+ */
 router.post('/login', authController.login);
 
-// GET /api/auth/logout - 로그아웃
+/**
+ * @swagger
+ * /auth/logout:
+ *   get:
+ *     summary: 로그아웃
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: 로그아웃 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
 router.get('/logout', authController.logout);
 
-// GET /api/auth/me - 현재 로그인한 사용자 정보
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: 현재 로그인한 사용자 정보
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 현재 사용자 정보
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/me', protect, authController.getMe);
 
-// PUT /api/auth/updatedetails - 사용자 정보 업데이트
+/**
+ * @swagger
+ * /auth/updatedetails:
+ *   put:
+ *     summary: 사용자 정보 업데이트
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nickname:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 정보 업데이트 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.put('/updatedetails', protect, authController.updateDetails);
 
-// PUT /api/auth/updatepassword - 비밀번호 변경
-console.log('authController:', authController);
-console.log('updatePassword function:', authController.updatePassword);
+/**
+ * @swagger
+ * /auth/updatepassword:
+ *   put:
+ *     summary: 비밀번호 변경
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 비밀번호 변경 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 token:
+ *                   type: string
+ *       401:
+ *         description: 현재 비밀번호가 일치하지 않음
+ */
 router.put('/updatepassword', protect, authController.updatePassword || ((req, res) => {
-    res.status(500).json({ message: 'updatePassword 함수가 구현되지 않았습니다' });
-  }));
+  res.status(500).json({ message: 'updatePassword 함수가 구현되지 않았습니다' });
+}));
 
-// POST /api/auth/forgotpassword - 비밀번호 재설정 이메일 발송
+/**
+ * @swagger
+ * /auth/forgotpassword:
+ *   post:
+ *     summary: 비밀번호 찾기
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 비밀번호 재설정 토큰 발급
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 resetToken:
+ *                   type: string
+ *       404:
+ *         description: 해당 이메일로 등록된 사용자가 없음
+ */
 router.post('/forgotpassword', authController.forgotPassword);
 
-// PUT /api/auth/resetpassword/:resettoken - 비밀번호 재설정
+/**
+ * @swagger
+ * /auth/resetpassword/{resettoken}:
+ *   put:
+ *     summary: 비밀번호 재설정
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: resettoken
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 비밀번호 재설정 토큰
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 비밀번호 재설정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: 유효하지 않은 토큰
+ */
 router.put('/resetpassword/:resettoken', authController.resetPassword);
 
 module.exports = router;
