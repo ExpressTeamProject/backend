@@ -25,6 +25,7 @@
  *          type: array
  *          items:
  *            type: string
+ *            enum: [수학, 물리학, 화학, 생물학, 컴퓨터공학, 전자공학, 기계공학, 경영학, 경제학, 심리학, 사회학, 기타]
  *          description: 게시글 카테고리
  *        tags:
  *          type: array
@@ -47,6 +48,9 @@
  *          items:
  *            type: string
  *          description: 댓글 ID 목록
+ *        isSolved:
+ *          type: boolean
+ *          description: 게시글 해결 여부
  *        createdAt:
  *          type: string
  *          format: date-time
@@ -59,12 +63,29 @@
  *        title: 첫 번째 게시글
  *        content: 안녕하세요, 이것은 테스트 게시글입니다.
  *        author: 60d0fe4f5311236168a109ca
- *        categories: [일반]
+ *        categories: [컴퓨터공학]
  *        tags: [테스트, 첫번째]
  *        viewCount: 0
+ *        isSolved: false
  */
 
 const mongoose = require('mongoose');
+
+// 카테고리 목록 정의
+const CATEGORIES = [
+  '수학', 
+  '물리학', 
+  '화학', 
+  '생물학', 
+  '컴퓨터공학', 
+  '전자공학', 
+  '기계공학', 
+  '경영학', 
+  '경제학', 
+  '심리학', 
+  '사회학', 
+  '기타'
+];
 
 const PostSchema = new mongoose.Schema(
   {
@@ -85,7 +106,18 @@ const PostSchema = new mongoose.Schema(
     },
     categories: {
       type: [String],
-      default: ['일반'],
+      validate: {
+        validator: function(categories) {
+          // 최소 하나의 카테고리는 있어야 함
+          if (categories.length === 0) {
+            return false;
+          }
+          // 모든 카테고리가 유효한지 확인
+          return categories.every(category => CATEGORIES.includes(category));
+        },
+        message: props => `${props.value}는 유효한 카테고리가 아닙니다. 유효한 카테고리: ${CATEGORIES.join(', ')}`
+      },
+      default: ['기타'],
     },
     tags: {
       type: [String],
@@ -110,6 +142,10 @@ const PostSchema = new mongoose.Schema(
         ref: 'Comment',
       },
     ],
+    isSolved: {
+      type: Boolean,
+      default: false,
+    }
   },
   {
     timestamps: true,
@@ -131,5 +167,13 @@ PostSchema.virtual('commentCount').get(function () {
 
 // 인덱스 설정
 PostSchema.index({ title: 'text', content: 'text' });
+PostSchema.index({ categories: 1 });
+PostSchema.index({ tags: 1 });
+PostSchema.index({ isSolved: 1 });
+PostSchema.index({ createdAt: -1 });
+PostSchema.index({ author: 1 });
+
+// 카테고리 목록 상수 노출
+PostSchema.statics.CATEGORIES = CATEGORIES;
 
 module.exports = mongoose.model('Post', PostSchema);
