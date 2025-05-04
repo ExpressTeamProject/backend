@@ -1,3 +1,53 @@
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *    Comment:
+ *      type: object
+ *      required:
+ *        - content
+ *        - author
+ *        - post
+ *      properties:
+ *        id:
+ *          type: string
+ *          description: 댓글 ID
+ *        content:
+ *          type: string
+ *          description: 댓글 내용
+ *        author:
+ *          type: string
+ *          description: 작성자 ID
+ *        post:
+ *          type: string
+ *          description: 게시글 ID
+ *        parent:
+ *          type: string
+ *          description: 부모 댓글 ID (대댓글인 경우)
+ *        likes:
+ *          type: array
+ *          items:
+ *            type: string
+ *          description: 좋아요한 사용자 ID 목록
+ *        isDeleted:
+ *          type: boolean
+ *          description: 삭제 여부
+ *        createdAt:
+ *          type: string
+ *          format: date-time
+ *          description: 생성 시간
+ *        updatedAt:
+ *          type: string
+ *          format: date-time
+ *          description: 수정 시간
+ *      example:
+ *        content: 좋은 게시글입니다!
+ *        author: 60d0fe4f5311236168a109ca
+ *        post: 60d0fe4f5311236168a109cb
+ *        likes: []
+ *        isDeleted: false
+ */
+
 const mongoose = require('mongoose');
 
 const CommentSchema = new mongoose.Schema(

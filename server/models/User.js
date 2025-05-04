@@ -1,3 +1,46 @@
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *    User:
+ *      type: object
+ *      required:
+ *        - username
+ *        - email
+ *        - password
+ *        - nickname
+ *      properties:
+ *        id:
+ *          type: string
+ *          description: 사용자 ID
+ *        username:
+ *          type: string
+ *          description: 사용자 이름 (3-20자)
+ *        email:
+ *          type: string
+ *          description: 사용자 이메일
+ *        password:
+ *          type: string
+ *          description: 사용자 비밀번호 (최소 6자)
+ *        nickname:
+ *          type: string
+ *          description: 사용자 닉네임 (최대 30자)
+ *        profileImage:
+ *          type: string
+ *          description: 프로필 이미지 URL
+ *        role:
+ *          type: string
+ *          enum: [user, admin]
+ *          description: 사용자 권한
+ *      example:
+ *        username: test_user
+ *        email: user@example.com
+ *        password: password123
+ *        nickname: 테스터
+ *        profileImage: default-profile.jpg
+ *        role: user
+ */
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
