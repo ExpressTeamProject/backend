@@ -1,5 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const corsOptions = {
+  // 개발 환경용 모든 출처 허용
+  origin: "*",
+  credentials: true,
+};
 const path = require('path');
 const swaggerConfig = require('./config/swagger');
 
@@ -17,7 +22,7 @@ const app = express();
 // 미들웨어
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors(corsOptions));
 
 // 서버 스테이터스 확인용 임시 페이지
 app.get('/server-status', (req, res) => {
