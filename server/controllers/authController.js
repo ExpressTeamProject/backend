@@ -92,18 +92,29 @@ exports.getMe = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/updatedetails
 // @access  Private
 exports.updateDetails = asyncHandler(async (req, res) => {
+  const { nickname, email, bio, major, website, socialLinks } = req.body;
+
   const fieldsToUpdate = {
-    nickname: req.body.nickname,
-    email: req.body.email,
-    username: req.body.username
+    nickname,
+    email,
   };
 
-  if (req.body.githubUrl !== undefined) {
-    fieldsToUpdate.githubUrl = req.body.githubUrl;
-  }
-
-  if (req.body.snsUrl !== undefined) {
-    fieldsToUpdate.snsUrl = req.body.snsUrl;
+  // 선택적 필드 추가
+  if (bio !== undefined) fieldsToUpdate.bio = bio;
+  if (major !== undefined) fieldsToUpdate.major = major;
+  if (website !== undefined) fieldsToUpdate.website = website;
+  
+  // socialLinks 객체가 있는 경우 추가
+  if (socialLinks) {
+    fieldsToUpdate.socialLinks = {};
+    
+    if (socialLinks.github !== undefined) {
+      fieldsToUpdate.socialLinks.github = socialLinks.github;
+    }
+    
+    if (socialLinks.twitter !== undefined) {
+      fieldsToUpdate.socialLinks.twitter = socialLinks.twitter;
+    }
   }
 
   const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
