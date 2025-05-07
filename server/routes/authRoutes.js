@@ -167,6 +167,12 @@ router.get('/me', protect, authController.getMe);
  *                 type: string
  *               username:
  *                 type: string
+ *               githubUrl:
+ *                 type: string
+ *                 description: Github 프로필 URL (선택사항)
+ *               snsUrl:
+ *                 type: string
+ *                 description: SNS URL (선택사항)
  *     responses:
  *       200:
  *         description: 정보 업데이트 성공
