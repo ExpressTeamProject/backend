@@ -68,7 +68,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, '비밀번호는 필수입니다'],
       minlength: [6, '비밀번호는 최소 6자 이상이어야 합니다'],
-      select: false, // 기본적으로 쿼리 결과에 포함되지 않음
+      select: false,
     },
     nickname: {
       type: String,
@@ -79,11 +79,37 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: 'default-profile.jpg',
     },
-    githubUrl: {
+    bio: {
+      type: String,
+      maxlength: [500, '자기소개는 최대 500자까지 가능합니다'],
+    },
+    major: {
+      type: String,
+      enum: ['수학', '물리학', '화학', '생물학', '컴퓨터공학', '전자공학', '기계공학', '경영학', '경제학', '심리학', '사회학', '기타'],
+      default: '기타',
+    },
+    website: {
       type: String,
     },
-    snsUrl: {
-      type: String,
+    socialLinks: {
+      github: {
+        type: String,
+        validate: {
+          validator: function(v) {
+            return !v || v.includes('github.com/');
+          },
+          message: 'GitHub URL 형식이 올바르지 않습니다'
+        }
+      },
+      twitter: {
+        type: String,
+        validate: {
+          validator: function(v) {
+            return !v || v.includes('twitter.com/');
+          },
+          message: 'Twitter URL 형식이 올바르지 않습니다'
+        }
+      }
     },
     role: {
       type: String,
