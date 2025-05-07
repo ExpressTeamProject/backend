@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
+const upload = require('../utils/fileUpload');
 
 /**
  * @swagger
@@ -189,6 +190,55 @@ router.get('/me', protect, authController.getMe);
  *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/updatedetails', protect, authController.updateDetails);
+
+/**
+ * @swagger
+ * /auth/profile-image:
+ *   put:
+ *     summary: 프로필 이미지 업로드
+ *     description: 사용자의 프로필 이미지를 업로드하거나 변경합니다.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - image
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: 업로드할 프로필 이미지 (5MB 이하, 이미지 형식만 허용)
+ *     responses:
+ *       200:
+ *         description: 프로필 이미지 업로드 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: 잘못된 요청 (이미지 없음 또는 잘못된 형식)
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.put(
+  '/profile-image',
+  protect,
+  upload.profileImage.single('image'),
+  authController.updateProfileImage
+);
 
 /**
  * @swagger

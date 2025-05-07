@@ -1,7 +1,8 @@
 const User = require('../models/User');
 const crypto = require('crypto');
-// const sendEmail = require('../utils/sendEmail'); // 이메일 전송 기능 구현 시 주석 해제
 const { asyncHandler } = require('../middleware/errorHandler');
+const fs = require('fs').promises;
+const path = require('path');
 
 // @desc    사용자 등록
 // @route   POST /api/auth/register
@@ -125,6 +126,50 @@ exports.updateDetails = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     data: user
+  });
+});
+
+// @desc    프로필 이미지 업로드
+// @route   PUT /api/auth/profile-image
+// @access  Private
+exports.updateProfileImage = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: '이미지를 업로드해주세요'
+    });
+  }
+
+  // 이전 프로필 이미지 경로
+  const user = await User.findById(req.user.id);
+  const previousImage = user.profileImage;
+  
+  // 기본 이미지가 아니라면 이전 이미지 삭제 시도
+  if (previousImage && previousImage !== 'default-profile.jpg' && !previousImage.includes('default')) {
+    try {
+      const imagePath = path.join(__dirname, '..', previousImage.replace(/^\//, ''));
+      await fs.access(imagePath);  // 파일 존재 여부 확인
+      await fs.unlink(imagePath);  // 파일 삭제
+      console.log(`이전 프로필 이미지 삭제: ${imagePath}`);
+    } catch (error) {
+      console.error('이전 프로필 이미지 삭제 실패:', error.message);
+      // 파일 삭제 실패해도 계속 진행
+    }
+  }
+
+  // 새 이미지 URL 생성
+  const imageUrl = `/uploads/profile-images/${req.file.filename}`;
+  
+  // 사용자 정보 업데이트
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user.id,
+    { profileImage: imageUrl },
+    { new: true }
+  );
+
+  res.status(200).json({
+    success: true,
+    data: updatedUser
   });
 });
 

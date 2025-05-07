@@ -3,6 +3,7 @@ const router = express.Router();
 const postController = require('../controllers/postController');
 const { protect, checkOwnership } = require('../middleware/auth');
 const Post = require('../models/Post');
+const upload = require('../utils/fileUpload');
 
 /**
  * @swagger
@@ -611,5 +612,237 @@ router.get('/categories', postController.getCategories);
  *                         description: 미해결 게시글 수
  */
 router.get('/categories/stats', postController.getCategoryStats);
+
+/**
+ * @swagger
+ * /posts:
+ *   post:
+ *     summary: 게시글 생성 (첨부파일 포함)
+ *     description: 새로운 게시글을 생성하고 첨부파일을 업로드합니다. 최대 3개의 파일을 첨부할 수 있습니다.
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *               - categories
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: 게시글 제목
+ *               content:
+ *                 type: string
+ *                 description: 게시글 내용 (마크다운 형식 지원)
+ *               categories:
+ *                 type: string
+ *                 description: 게시글 카테고리 (쉼표로 구분된 문자열)
+ *               tags:
+ *                 type: string
+ *                 description: 게시글 태그 (쉼표로 구분된 문자열, 최대 5개)
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 첨부파일 (최대 3개, 각 5MB 이하)
+ *     responses:
+ *       201:
+ *         description: 게시글 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Post'
+ *       400:
+ *         description: 잘못된 요청 (유효하지 않은 입력값)
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.post(
+  '/',
+  protect,
+  upload.postAttachment.array('files', 3), // 최대 3개까지
+  postController.createPost
+);
+
+/**
+ * @swagger
+ * /posts/{id}/attachments:
+ *   post:
+ *     summary: 게시글에 첨부파일 추가
+ *     description: 기존 게시글에 첨부파일을 추가합니다. 기존 첨부파일과 합쳐서 최대 3개까지 가능합니다.
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 게시글 ID
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - files
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 첨부파일 (최대 3개, 각 5MB 이하)
+ *     responses:
+ *       200:
+ *         description: 첨부파일 추가 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Post'
+ *       400:
+ *         description: 잘못된 요청 (파일 없음 또는 첨부파일 제한 초과)
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.post(
+  '/:id/attachments',
+  protect,
+  checkOwnership(Post),
+  upload.postAttachment.array('files', 3),
+  postController.addAttachments
+);
+
+/**
+ * @swagger
+ * /posts/{id}/attachments/{filename}:
+ *   delete:
+ *     summary: 게시글에서 첨부파일 삭제
+ *     description: 게시글에서 특정 첨부파일을 삭제합니다. 게시글 작성자만 삭제할 수 있습니다.
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 게시글 ID
+ *       - in: path
+ *         name: filename
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 삭제할 파일명
+ *     responses:
+ *       200:
+ *         description: 첨부파일 삭제 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Post'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         description: 게시글 또는 첨부파일을 찾을 수 없음
+ */
+router.delete(
+  '/:id/attachments/:filename',
+  protect,
+  checkOwnership(Post),
+  postController.removeAttachment
+);
+
+/**
+ * @swagger
+ * /posts/upload-image:
+ *   post:
+ *     summary: 마크다운 에디터용 이미지 업로드
+ *     description: 마크다운 에디터에서 사용할 이미지를 업로드합니다. 업로드된 이미지 URL을 반환합니다.
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - image
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: 업로드할 이미지 파일 (5MB 이하, 이미지 형식만 허용)
+ *     responses:
+ *       200:
+ *         description: 이미지 업로드 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 url:
+ *                   type: string
+ *                   description: 업로드된 이미지의 URL
+ *                   example: "/uploads/post-images/image_1234567890.jpg"
+ *                 filename:
+ *                   type: string
+ *                   description: 저장된 파일명
+ *                   example: "image_1234567890.jpg"
+ *       400:
+ *         description: 잘못된 요청 (이미지 없음 또는 잘못된 형식)
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.post(
+  '/upload-image',
+  protect,
+  upload.postImage.single('image'),
+  postController.uploadImage
+);
 
 module.exports = router;

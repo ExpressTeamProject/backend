@@ -13,6 +13,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const downloadRoutes = require('./routes/downloadRoutes');
 
 // 오류 처리 미들웨어
 const { errorHandler } = require('./middleware/errorHandler');
@@ -23,6 +24,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
+
+// 정적 파일 제공 (uploads 폴더)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 서버 스테이터스 확인용 임시 페이지
 app.get('/server-status', (req, res) => {
@@ -95,6 +99,7 @@ app.use('/users', userRoutes);
 app.use('/posts', postRoutes);
 app.use('/comments', commentRoutes);
 app.use('/api-docs', swaggerConfig.serve, swaggerConfig.setup);
+app.use('/download', downloadRoutes);
 
 // 배포 환경에서는 React 정적 파일 제공
 if (process.env.NODE_ENV === 'production') {
