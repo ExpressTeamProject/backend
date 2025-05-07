@@ -297,6 +297,7 @@ exports.searchPosts = asyncHandler(async (req, res) => {
   }
 
   const posts = await Post.find(searchQuery)
+    .select('title content author categories tags createdAt updatedAt viewCount likes isSolved')
     .sort(sortOption)
     .skip(startIndex)
     .limit(parseInt(limit))
