@@ -32,6 +32,30 @@
  *          items:
  *            type: string
  *          description: 게시글 태그
+ *        attachments:
+ *          type: array
+ *          items:
+ *            type: object
+ *            properties:
+ *              filename:
+ *                type: string
+ *                description: 서버에 저장된 파일명
+ *              originalname:
+ *                type: string
+ *                description: 원본 파일명
+ *              path:
+ *                type: string
+ *                description: 파일 접근 경로
+ *              mimetype:
+ *                type: string
+ *                description: 파일 MIME 타입
+ *              size:
+ *                type: integer
+ *                description: 파일 크기 (바이트)
+ *              uploadDate:
+ *                type: string
+ *                format: date-time
+ *                description: 업로드 일시
  *        imageUrl:
  *          type: string
  *          description: 이미지 URL
@@ -59,33 +83,10 @@
  *          type: string
  *          format: date-time
  *          description: 수정 시간
- *      example:
- *        title: 첫 번째 게시글
- *        content: 안녕하세요, 이것은 테스트 게시글입니다.
- *        author: 60d0fe4f5311236168a109ca
- *        categories: [컴퓨터공학]
- *        tags: [테스트, 첫번째]
- *        viewCount: 0
- *        isSolved: false
  */
 
+// models/Post.js
 const mongoose = require('mongoose');
-
-// 카테고리 목록 정의
-const CATEGORIES = [
-  '수학', 
-  '물리학', 
-  '화학', 
-  '생물학', 
-  '컴퓨터공학', 
-  '전자공학', 
-  '기계공학', 
-  '경영학', 
-  '경제학', 
-  '심리학', 
-  '사회학', 
-  '기타'
-];
 
 const PostSchema = new mongoose.Schema(
   {
@@ -106,26 +107,45 @@ const PostSchema = new mongoose.Schema(
     },
     categories: {
       type: [String],
-      validate: {
-        validator: function(categories) {
-          // 최소 하나의 카테고리는 있어야 함
-          if (categories.length === 0) {
-            return false;
-          }
-          // 모든 카테고리가 유효한지 확인
-          return categories.every(category => CATEGORIES.includes(category));
-        },
-        message: props => `${props.value}는 유효한 카테고리가 아닙니다. 유효한 카테고리: ${CATEGORIES.join(', ')}`
-      },
       default: ['기타'],
+      enum: ['수학', '물리학', '화학', '생물학', '컴퓨터공학', '전자공학', '기계공학', '경영학', '경제학', '심리학', '사회학', '기타']
     },
     tags: {
       type: [String],
       default: [],
+      validate: {
+        validator: function(tags) {
+          return tags.length <= 5; // 최대 5개 태그 제한
+        },
+        message: '태그는 최대 5개까지 추가할 수 있습니다'
+      }
     },
-    imageUrl: {
-      type: String,
-    },
+    attachments: [{
+      filename: {
+        type: String,
+        required: true
+      },
+      originalname: {
+        type: String,
+        required: true
+      },
+      path: {
+        type: String,
+        required: true
+      },
+      mimetype: {
+        type: String,
+        required: true
+      },
+      size: {
+        type: Number,
+        required: true
+      },
+      uploadDate: {
+        type: Date,
+        default: Date.now
+      }
+    }],
     viewCount: {
       type: Number,
       default: 0,
@@ -149,7 +169,6 @@ const PostSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    // 가상 필드 설정
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
@@ -172,8 +191,5 @@ PostSchema.index({ tags: 1 });
 PostSchema.index({ isSolved: 1 });
 PostSchema.index({ createdAt: -1 });
 PostSchema.index({ author: 1 });
-
-// 카테고리 목록 상수 노출
-PostSchema.statics.CATEGORIES = CATEGORIES;
 
 module.exports = mongoose.model('Post', PostSchema);

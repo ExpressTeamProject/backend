@@ -61,3 +61,7 @@ pids
 
 # MongoDB 로컬 데이터베이스 파일(사용하는 경우)
 /data/db
+
+# 업로드된 파일
+uploads/*
+!uploads/.gitkeep

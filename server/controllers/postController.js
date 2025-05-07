@@ -2,6 +2,9 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Comment = require('../models/Comment');
+const upload = require('../utils/fileUpload');
+const path = require('path');
+const fs = require('fs').promises;
 
 // @desc    모든 게시글 가져오기 (필터링, 정렬, 검색 포함)
 // @route   GET /api/posts
@@ -160,15 +163,155 @@ exports.getPost = asyncHandler(async (req, res) => {
 // @route   POST /api/posts
 // @access  Private
 exports.createPost = asyncHandler(async (req, res) => {
-  // 현재 로그인한 사용자를 작성자로 설정
-  req.body.author = req.user.id;
+  try {
+    const { title, content, categories, tags } = req.body;
+    
+    // 카테고리가 배열이 아니라면 배열로 변환
+    const categoriesArray = Array.isArray(categories) 
+      ? categories 
+      : categories.split(',').map(c => c.trim());
+    
+    // 태그가 배열이 아니라면 배열로 변환
+    const tagsArray = Array.isArray(tags) 
+      ? tags 
+      : tags.split(',').map(t => t.trim());
+    
+    // 첨부파일 정보 가져오기
+    const attachments = req.files ? req.files.map(file => ({
+      filename: file.filename,
+      originalname: file.originalname,
+      path: `/uploads/post-attachments/${file.filename}`,
+      mimetype: file.mimetype,
+      size: file.size
+    })) : [];
+    
+    // 게시글 생성
+    const post = await Post.create({
+      title,
+      content,
+      author: req.user.id,
+      categories: categoriesArray,
+      tags: tagsArray,
+      attachments
+    });
+    
+    // 생성된 게시글 반환
+    res.status(201).json({
+      success: true,
+      data: post
+    });
+  } catch (error) {
+    // 업로드된 파일이 있다면 삭제
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          await fs.unlink(file.path);
+        } catch (unlinkError) {
+          console.error('파일 삭제 실패:', unlinkError);
+        }
+      }
+    }
+    
+    throw error;
+  }
+});
 
-  // 게시글 생성
-  const post = await Post.create(req.body);
-
-  res.status(201).json({
+// @desc    게시글에 첨부파일 추가
+// @route   POST /api/posts/:id/attachments
+// @access  Private (소유자만)
+exports.addAttachments = asyncHandler(async (req, res) => {
+  const post = req.resource; // checkOwnership 미들웨어에서 설정됨
+  
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: '파일을 업로드해주세요'
+    });
+  }
+  
+  // 첨부파일 개수 제한 (최대 3개)
+  if ((post.attachments?.length || 0) + req.files.length > 3) {
+    return res.status(400).json({
+      success: false,
+      message: '첨부파일은 최대 3개까지 업로드할 수 있습니다'
+    });
+  }
+  
+  // 새 첨부파일 정보 추가
+  const newAttachments = req.files.map(file => ({
+    filename: file.filename,
+    originalname: file.originalname,
+    path: `/uploads/post-attachments/${file.filename}`,
+    mimetype: file.mimetype,
+    size: file.size
+  }));
+  
+  // 기존 첨부파일 배열에 새 파일 추가
+  post.attachments = [...(post.attachments || []), ...newAttachments];
+  
+  await post.save();
+  
+  res.status(200).json({
     success: true,
     data: post
+  });
+});
+
+// @desc    게시글에서 첨부파일 삭제
+// @route   DELETE /api/posts/:id/attachments/:filename
+// @access  Private (소유자만)
+exports.removeAttachment = asyncHandler(async (req, res) => {
+  const post = req.resource; // checkOwnership 미들웨어에서 설정됨
+  const filename = req.params.filename;
+  
+  // 해당 첨부파일 찾기
+  const attachmentIndex = post.attachments.findIndex(att => att.filename === filename);
+  
+  if (attachmentIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      message: '첨부파일을 찾을 수 없습니다'
+    });
+  }
+  
+  // 파일 시스템에서 파일 삭제
+  try {
+    const filePath = path.join(process.cwd(), 'uploads/post-attachments', filename);
+    await fs.unlink(filePath);
+  } catch (error) {
+    console.error('파일 삭제 실패:', error);
+    // 파일이 없더라도 DB에서는 삭제 계속 진행
+  }
+  
+  // 배열에서 첨부파일 제거
+  post.attachments.splice(attachmentIndex, 1);
+  await post.save();
+  
+  res.status(200).json({
+    success: true,
+    data: post
+  });
+});
+
+// @desc    이미지 업로드 (마크다운 편집기용)
+// @route   POST /api/posts/upload-image
+// @access  Private
+exports.uploadImage = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: '이미지를 업로드해주세요'
+    });
+  }
+  
+  // 이미지 URL 생성
+  const imageUrl = `/uploads/post-images/${req.file.filename}`;
+  
+  // 마크다운 편집기에서 사용할 수 있는 형식으로 응답
+  res.status(200).json({
+    success: true,
+    url: imageUrl,
+    filename: req.file.filename
   });
 });
 
