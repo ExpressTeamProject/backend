@@ -268,8 +268,10 @@ exports.searchPosts = asyncHandler(async (req, res) => {
   };
   
   // 카테고리 필터
-  if (category) {
-    searchQuery.categories = category;
+  if (req.query.categories) {
+    const categoriesArray = req.query.categories.split(',');
+
+    searchQuery.categories = { $in: categoriesArray };
   }
   
   // 상태 필터
