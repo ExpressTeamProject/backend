@@ -1,6 +1,7 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
+const Comment = require('../models/Comment');
 
 // @desc    모든 게시글 가져오기 (필터링, 정렬, 검색 포함)
 // @route   GET /api/posts
@@ -111,34 +112,48 @@ exports.getPosts = asyncHandler(async (req, res) => {
 // @route   GET /api/posts/:id
 // @access  Public
 exports.getPost = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id)
-    .populate({
-      path: 'author',
-      select: 'username nickname profileImage'
-    })
-    .populate({
-      path: 'comments',
-      populate: {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate({
         path: 'author',
         select: 'username nickname profileImage'
-      }
-    });
+      });
+    
+    // 먼저 게시글만 가져오고
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: '게시글을 찾을 수 없습니다'
+      });
+    }
+    
+    // 필요한 경우 별도로 댓글 조회
+    if (post.comments && post.comments.length > 0) {
+      await post.populate({
+        path: 'comments',
+        populate: {
+          path: 'author',
+          select: 'username nickname profileImage'
+        }
+      });
+    }
 
-  if (!post) {
-    return res.status(404).json({
+    // 조회수 증가
+    post.viewCount += 1;
+    await post.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+      success: true,
+      data: post
+    });
+  } catch (error) {
+    console.error('게시글 조회 에러:', error);
+    res.status(500).json({
       success: false,
-      message: '게시글을 찾을 수 없습니다'
+      message: '게시글 조회 중 오류가 발생했습니다',
+      error: error.message
     });
   }
-
-  // 조회수 증가 (중복 방지 로직은 클라이언트 측에서 처리)
-  post.viewCount += 1;
-  await post.save({ validateBeforeSave: false });
-
-  res.status(200).json({
-    success: true,
-    data: post
-  });
 });
 
 // @desc    게시글 생성
