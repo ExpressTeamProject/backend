@@ -98,6 +98,14 @@ exports.updateDetails = asyncHandler(async (req, res) => {
     username: req.body.username
   };
 
+  if (req.body.githubUrl !== undefined) {
+    fieldsToUpdate.githubUrl = req.body.githubUrl;
+  }
+
+  if (req.body.snsUrl !== undefined) {
+    fieldsToUpdate.snsUrl = req.body.snsUrl;
+  }
+
   const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
     new: true,
     runValidators: true

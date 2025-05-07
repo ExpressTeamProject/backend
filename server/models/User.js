@@ -79,6 +79,12 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: 'default-profile.jpg',
     },
+    githubUrl: {
+      type: String,
+    },
+    snsUrl: {
+      type: String,
+    },
     role: {
       type: String,
       enum: ['user', 'admin'],
