@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
@@ -26,25 +25,22 @@ const seedData = async () => {
 
     console.log('기존 데이터가 삭제되었습니다');
 
-    // 관리자 사용자 생성
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('admin123', salt);
-
+    // 관리자 사용자 생성 - 직접 해싱을 수행하지 않고, 모델의 미들웨어가 처리하도록 함
     const admin = await User.create({
       username: 'admin',
       email: 'admin@example.com',
-      password: hashedPassword,
+      password: 'admin123', // 원본 비밀번호 전달
       nickname: '관리자',
       role: 'admin'
     });
 
     console.log('관리자 계정이 생성되었습니다:', admin.email);
 
-    // 일반 사용자 생성
+    // 일반 사용자 생성 - 마찬가지로 원본 비밀번호 사용
     const user1 = await User.create({
       username: 'user1',
       email: 'user1@example.com',
-      password: await bcrypt.hash('user123', salt),
+      password: 'user123', // 원본 비밀번호 전달
       nickname: '사용자1',
       role: 'user'
     });
@@ -52,40 +48,40 @@ const seedData = async () => {
     const user2 = await User.create({
       username: 'user2',
       email: 'user2@example.com',
-      password: await bcrypt.hash('user123', salt),
+      password: 'user123', // 원본 비밀번호 전달
       nickname: '사용자2',
       role: 'user'
     });
 
     console.log('일반 사용자 계정이 생성되었습니다');
 
-    // 게시글 생성 부분 업데이트
+    // 게시글 생성
     const post1 = await Post.create({
       title: '첫 번째 공지사항',
       content: '커뮤니티에 오신 것을 환영합니다. 이 게시판은 다양한 주제에 대해 토론하는 공간입니다.',
       author: admin._id,
-      categories: ['기타'] // 기타 카테고리로 변경
+      categories: ['기타']
     });
 
     const post2 = await Post.create({
       title: '자기소개 해주세요!',
       content: '새로운 회원들은 이 게시글에 댓글로 자기소개를 해주세요.',
       author: admin._id,
-      categories: ['기타'] // 기타 카테고리로 변경
+      categories: ['기타']
     });
 
     const post3 = await Post.create({
       title: 'Express와 React 연동하기',
       content: 'Express 백엔드와 React 프론트엔드를 연동하는 방법에 대해 설명합니다. CORS 설정, 프록시 설정 등의 내용을 다룹니다.',
       author: user1._id,
-      categories: ['컴퓨터공학'] // 컴퓨터공학 카테고리로 변경
+      categories: ['컴퓨터공학']
     });
 
     const post4 = await Post.create({
       title: 'MongoDB 사용 팁',
       content: 'MongoDB를 효율적으로 사용하기 위한 몇 가지 팁을 공유합니다. 인덱스 설정, 쿼리 최적화 등에 대해 알아봅시다.',
       author: user2._id,
-      categories: ['컴퓨터공학'] // 컴퓨터공학 카테고리로 변경
+      categories: ['컴퓨터공학']
     });
 
     const post5 = await Post.create({

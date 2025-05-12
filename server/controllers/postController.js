@@ -44,7 +44,11 @@ exports.getPosts = asyncHandler(async (req, res) => {
   
   // 카테고리 필터
   if (category) {
-    filterQuery.categories = category;
+    const categoriesArray = Array.isArray(category)
+      ? category
+      : category.split(',').map(c => c.trim());
+    
+    filterQuery.categories = { $in: categoriesArray }
   }
   
   // 상태 필터
