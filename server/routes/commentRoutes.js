@@ -1,31 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-
-// 임시 댓글 컨트롤러
-const commentController = {
-  createComment: (req, res) => {
-    res.status(201).json({ success: true, message: '댓글 작성 기능 준비 중' });
-  },
-  getComment: (req, res) => {
-    res.status(200).json({ success: true, message: '댓글 조회 기능 준비 중' });
-  },
-  updateComment: (req, res) => {
-    res.status(200).json({ success: true, message: '댓글 수정 기능 준비 중' });
-  },
-  deleteComment: (req, res) => {
-    res.status(200).json({ success: true, message: '댓글 삭제 기능 준비 중' });
-  },
-  getPostComments: (req, res) => {
-    res.status(200).json({ success: true, message: '게시글 댓글 목록 기능 준비 중' });
-  },
-  createReply: (req, res) => {
-    res.status(201).json({ success: true, message: '대댓글 작성 기능 준비 중' });
-  },
-  toggleLike: (req, res) => {
-    res.status(200).json({ success: true, message: '댓글 좋아요 기능 준비 중' });
-  }
-};
+const { protect, checkOwnership } = require('../middleware/auth');
+const Comment = require('../models/Comment');
+const commentController = require('../controllers/commentController');
+const upload = require('../utils/fileUpload');
 
 /**
  * @swagger
@@ -49,6 +27,12 @@ const commentController = {
  *                 type: string
  *               postId:
  *                 type: string
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 첨부파일 (최대 2개)
  *     responses:
  *       201:
  *         description: 댓글 생성 성공
@@ -67,7 +51,7 @@ const commentController = {
  *         description: 게시글을 찾을 수 없음
  */
 router.route('/')
-  .post(protect, commentController.createComment);
+  .post(protect, upload.commentAttachment.array('files', 2), commentController.createComment);
 
 /**
  * @swagger
@@ -123,6 +107,12 @@ router.route('/')
  *             properties:
  *               content:
  *                 type: string
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 첨부파일 (최대 2개)
  *     responses:
  *       200:
  *         description: 댓글 수정 성공
@@ -178,8 +168,8 @@ router.route('/')
  */
 router.route('/:id')
   .get(commentController.getComment)
-  .put(protect, commentController.updateComment)
-  .delete(protect, commentController.deleteComment);
+  .put(protect, checkOwnership(Comment), upload.commentAttachment.array('files', 2), commentController.updateComment)
+  .delete(protect, checkOwnership(Comment), commentController.deleteComment);
 
 /**
  * @swagger
@@ -255,6 +245,12 @@ router.get('/post/:postId', commentController.getPostComments);
  *             properties:
  *               content:
  *                 type: string
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 첨부파일 (최대 2개)
  *     responses:
  *       201:
  *         description: 대댓글 생성 성공
@@ -272,7 +268,7 @@ router.get('/post/:postId', commentController.getPostComments);
  *       404:
  *         description: 댓글을 찾을 수 없음
  */
-router.post('/reply/:commentId', protect, commentController.createReply);
+router.post('/reply/:commentId', protect, upload.commentAttachment.array('files', 2), commentController.createReply);
 
 /**
  * @swagger
@@ -307,5 +303,47 @@ router.post('/reply/:commentId', protect, commentController.createReply);
  *         $ref: '#/components/responses/NotFoundError'
  */
 router.put('/:id/like', protect, commentController.toggleLike);
+
+/**
+ * @swagger
+ * /comments/{id}/attachments/{filename}:
+ *   delete:
+ *     summary: 댓글에서 첨부파일 삭제
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 댓글 ID
+ *       - in: path
+ *         name: filename
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 삭제할 파일명
+ *     responses:
+ *       200:
+ *         description: 첨부파일 삭제 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         description: 댓글 또는 첨부파일을 찾을 수 없음
+ */
+router.delete('/:id/attachments/:filename', protect, checkOwnership(Comment), commentController.removeAttachment);
 
 module.exports = router;

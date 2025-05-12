@@ -24,6 +24,31 @@
  *        parent:
  *          type: string
  *          description: 부모 댓글 ID (대댓글인 경우)
+ *        attachments:
+ *          type: array
+ *          items:
+ *            type: object
+ *            properties:
+ *              filename:
+ *                type: string
+ *                description: 서버에 저장된 파일명
+ *              originalname:
+ *                type: string
+ *                description: 원본 파일명
+ *              path:
+ *                type: string
+ *                description: 파일 접근 경로
+ *              mimetype:
+ *                type: string
+ *                description: 파일 MIME 타입
+ *              size:
+ *                type: integer
+ *                description: 파일 크기 (바이트)
+ *              uploadDate:
+ *                type: string
+ *                format: date-time
+ *                description: 업로드 일시
+ *          description: 첨부파일 목록
  *        likes:
  *          type: array
  *          items:
@@ -73,6 +98,32 @@ const CommentSchema = new mongoose.Schema(
       ref: 'Comment',
       default: null, // 대댓글인 경우 상위 댓글의 ID가 저장됨
     },
+    attachments: [{
+      filename: {
+        type: String,
+        required: true
+      },
+      originalname: {
+        type: String,
+        required: true
+      },
+      path: {
+        type: String,
+        required: true
+      },
+      mimetype: {
+        type: String,
+        required: true
+      },
+      size: {
+        type: Number,
+        required: true
+      },
+      uploadDate: {
+        type: Date,
+        default: Date.now
+      }
+    }],
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -102,5 +153,11 @@ CommentSchema.virtual('replies', {
   localField: '_id',
   foreignField: 'parent',
 });
+
+// 인덱스 설정
+CommentSchema.index({ post: 1 });
+CommentSchema.index({ parent: 1 });
+CommentSchema.index({ author: 1 });
+CommentSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Comment', CommentSchema);

@@ -13,7 +13,12 @@ const createUploadDir = (dir) => {
 };
 
 // 필요한 디렉토리 생성
-['uploads/profile-images', 'uploads/post-images', 'uploads/post-attachments'].forEach(dir => {
+[
+  'uploads/profile-images', 
+  'uploads/post-images', 
+  'uploads/post-attachments',
+  'uploads/comment-attachments'
+].forEach(dir => {
   createUploadDir(path.join(__dirname, '..', dir));
 });
 
@@ -58,6 +63,17 @@ const postAttachmentStorage = multer.diskStorage({
   filename: (req, file, cb) => {
     const safeFilename = generateSafeFilename(file.originalname);
     cb(null, `attachment_${safeFilename}`);
+  }
+});
+
+// 파일 저장 설정 - 댓글 첨부파일
+const commentAttachmentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'uploads/comment-attachments'));
+  },
+  filename: (req, file, cb) => {
+    const safeFilename = generateSafeFilename(file.originalname);
+    cb(null, `comment_${safeFilename}`);
   }
 });
 
@@ -112,6 +128,12 @@ const upload = {
   postAttachment: multer({
     storage: postAttachmentStorage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: attachmentFilter
+  }),
+
+  commentAttachment: multer({
+    storage: commentAttachmentStorage,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB (댓글은 더 작게 제한)
     fileFilter: attachmentFilter
   })
 };
