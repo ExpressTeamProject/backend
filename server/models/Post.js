@@ -165,6 +165,15 @@ const PostSchema = new mongoose.Schema(
     isSolved: {
       type: Boolean,
       default: false,
+    },
+    aiResponse: {
+      type: String,
+      default: null
+    },
+    // AI 응답 생성 시간
+    aiResponseCreatedAt: {
+      type: Date,
+      default: null
     }
   },
   {

@@ -144,6 +144,28 @@ exports.getPost = asyncHandler(async (req, res) => {
         }
       });
     }
+    
+    // 게시글에 AI 응답이 없고, 자동 생성 설정이 켜져 있다면 생성 시도
+    if (!post.aiResponse && process.env.AUTO_GENERATE_AI_RESPONSE === 'true') {
+      try {
+        const OpenAIClient = require('../utils/openai');
+        const openai = new OpenAIClient(process.env.OPENAI_API_KEY);
+        
+        const aiResponse = await openai.generateResponse(
+          post.content,
+          post.title,
+          post.categories[0] || '기타',
+          post.tags
+        );
+        
+        post.aiResponse = aiResponse;
+        post.aiResponseCreatedAt = Date.now();
+        await post.save({ validateBeforeSave: false });
+      } catch (error) {
+        console.error('AI 응답 자동 생성 실패:', error);
+        // AI 응답 생성에 실패하더라도 게시글은 정상적으로 반환
+      }
+    }
 
     // 조회수 증가
     post.viewCount += 1;

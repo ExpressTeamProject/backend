@@ -9,7 +9,7 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB 비활성화 설정
-const DISABLE_MONGODB = false; // MongoDB 연결을 건너뛰려면 true로 설정
+const DISABLE_MONGODB = true; // MongoDB 연결을 건너뛰려면 true로 설정
 
 // 서버 시작 함수
 const startServer = () => {

@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const corsOptions = {
-  // 개발 환경용 모든 출처 허용
-  origin: "*",
+  // 로컬 서버 허용
+  origin: "http://localhost:5173",
   credentials: true,
 };
 const path = require('path');
@@ -14,6 +14,7 @@ const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const downloadRoutes = require('./routes/downloadRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 // 오류 처리 미들웨어
 const { errorHandler } = require('./middleware/errorHandler');
@@ -100,6 +101,7 @@ app.use('/posts', postRoutes);
 app.use('/comments', commentRoutes);
 app.use('/api-docs', swaggerConfig.serve, swaggerConfig.setup);
 app.use('/download', downloadRoutes);
+app.use('/ai', aiRoutes);
 
 // 배포 환경에서는 React 정적 파일 제공
 if (process.env.NODE_ENV === 'production') {
