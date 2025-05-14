@@ -17,7 +17,9 @@ const createUploadDir = (dir) => {
   'uploads/profile-images', 
   'uploads/post-images', 
   'uploads/post-attachments',
-  'uploads/comment-attachments'
+  'uploads/comment-attachments',
+  'uploads/article-images',
+  'uploads/article-attachments'
 ].forEach(dir => {
   createUploadDir(path.join(__dirname, '..', dir));
 });
@@ -74,6 +76,28 @@ const commentAttachmentStorage = multer.diskStorage({
   filename: (req, file, cb) => {
     const safeFilename = generateSafeFilename(file.originalname);
     cb(null, `comment_${safeFilename}`);
+  }
+});
+
+// 파일 저장 설정 - 커뮤니티 게시글 이미지
+const articleImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'uploads/article-images'));
+  },
+  filename: (req, file, cb) => {
+    const safeFilename = generateSafeFilename(file.originalname);
+    cb(null, `article_${safeFilename}`);
+  }
+});
+
+// 파일 저장 설정 - 커뮤니티 게시글 첨부파일
+const articleAttachmentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'uploads/article-attachments'));
+  },
+  filename: (req, file, cb) => {
+    const safeFilename = generateSafeFilename(file.originalname);
+    cb(null, `article_att_${safeFilename}`);
   }
 });
 
@@ -134,6 +158,18 @@ const upload = {
   commentAttachment: multer({
     storage: commentAttachmentStorage,
     limits: { fileSize: 2 * 1024 * 1024 }, // 2MB (댓글은 더 작게 제한)
+    fileFilter: attachmentFilter
+  }),
+
+  articleImage: multer({
+    storage: articleImageStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: imageFilter
+  }),
+  
+  articleAttachment: multer({
+    storage: articleAttachmentStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     fileFilter: attachmentFilter
   })
 };
