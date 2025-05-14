@@ -223,57 +223,72 @@ exports.createPost = asyncHandler(async (req, res) => {
       attachments
     });
 
-    /* AI 답변 댓글 생성코드 시작 */
-    if (process.env.AUTO_GENERATE_AI_RESPONSE === 'true') {
-      try {
-        // openAI API 클라이언트 가져오기
-        const OpenAIClient = require('../utils/openai');
-        const openai = new OpenAIClient(process.env.OPENAI_API_KEY);
-
-        // AI 응답 생성
-        const aiResponse = await openai.generateResponse(
-          post.content,
-          post.title,
-          post.categories[0] || '기타',
-          post.tags
-        );
-
-        // AI 시스템 계정 찾기
-        // Username으로 검색하여 유저 수가 많아지면 답변 생성이 느릴 수 있음
-        // 그럴 때엔 검색 조건을 Username이 아닌 유저 고유 토큰값 (DB 참조)로 변경할 것
-        const User = require('../models/User');
-        let aiUser = await User.findOne({ username: 'ai-assistant' });
-
-        if (!aiUser) {
-          console.error('AI 사용자 계정을 찾을 수 없습니다. setupAIUser 스크립트를 실행해주세요.');
-        } else {
-          // AI 댓글 생성
-          const Comment = require('../models/Comment');
-          const aiComment = await Comment.create({
-            content: aiResponse,
-            author: aiUser._id,
-            post: post._id,
-            isAIGenerated: true // AI가 생성한 댓글임을 표시하는 플래그
-          });
-
-          // 게시글에 댓글 ID 추가
-          post.comments.push(aiComment._id);
-          await psot.save();
-
-          console.log('게시글 ${post._id}에 AI 댓글이 자동 생성되었습니다.');
-        }
-      } catch (error) {
-        console.error('AI 댓글 자동 생성 실패: ', error);
-        // AI 댓글 생성에 실패하여도 게시글 생성은 정상적으로 진행됨
-      }
-    }
-    /* AI 답변 댓글 생성코드 종료 */
-
-    // 생성된 게시글 반환
+    // 게시글 생성 성공 응답을 먼저 반환
     res.status(201).json({
       success: true,
       data: post
     });
+
+    // AI 댓글 생성을 비동기적으로 처리
+    if (process.env.AUTO_GENERATE_AI_COMMENT === 'true') {
+      // 비동기 함수로 AI 댓글 생성 로직 래핑
+      const generateAIComment = async (postId, postContent, postTitle, postCategories, postTags) => {
+        try {
+          // OpenAI API 클라이언트 가져오기
+          const OpenAIClient = require('../utils/openai');
+          const openai = new OpenAIClient(process.env.OPENAI_API_KEY);
+  
+          // AI 응답 생성
+          const aiResponse = await openai.generateResponse(
+            postContent,
+            postTitle,
+            postCategories[0] || '기타',
+            postTags
+          );
+  
+          // AI 시스템 계정 찾기
+          const User = require('../models/User');
+          let aiUser = await User.findOne({ username: 'ai-assistant' });
+  
+          if (!aiUser) {
+            console.error('AI 사용자 계정을 찾을 수 없습니다. setup-ai 스크립트를 실행해주세요.');
+            return;
+          }
+  
+          // AI 댓글 생성
+          const Comment = require('../models/Comment');
+          const Post = require('../models/Post'); // 게시글 모델 다시 가져오기
+          
+          const aiComment = await Comment.create({
+            content: aiResponse,
+            author: aiUser._id,
+            post: postId,
+            isAIGenerated: true // AI가 생성한 댓글임을 표시하는 플래그
+          });
+  
+          // 최신 게시글 상태 가져오기
+          const updatedPost = await Post.findById(postId);
+          if (updatedPost) {
+            // 게시글에 댓글 ID 추가
+            updatedPost.comments.push(aiComment._id);
+            await updatedPost.save();
+          }
+  
+          console.log(`게시글 ${postId}에 AI 댓글이 자동 생성되었습니다.`);
+        } catch (error) {
+          console.error('AI 댓글 자동 생성 실패:', error);
+        }
+      };
+
+      // 비동기 함수 호출
+      generateAIComment(
+        post._id,
+        post.content,
+        post.title,
+        post.categories,
+        post.tags
+      ).catch(err => console.error('AI 댓글 생성 중 오류 발생:', err));
+    }
   } catch (error) {
     // 업로드된 파일이 있다면 삭제
     if (req.files && req.files.length > 0) {
