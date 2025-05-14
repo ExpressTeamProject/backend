@@ -255,12 +255,12 @@ router.put(
  *           schema:
  *             type: object
  *             required:
- *               - currentPassword
  *               - newPassword
+ *               - confirmPassword
  *             properties:
- *               currentPassword:
- *                 type: string
  *               newPassword:
+ *                 type: string
+ *               confirmPassword:
  *                 type: string
  *     responses:
  *       200:
@@ -274,12 +274,10 @@ router.put(
  *                   type: boolean
  *                 token:
  *                   type: string
- *       401:
- *         description: 현재 비밀번호가 일치하지 않음
+ *       400:
+ *         description: 비밀번호가 일치하지 않음
  */
-router.put('/updatepassword', protect, authController.updatePassword || ((req, res) => {
-  res.status(500).json({ message: 'updatePassword 함수가 구현되지 않았습니다' });
-}));
+router.put('/updatepassword', protect, authController.updatePassword);
 
 /**
  * @swagger

@@ -145,6 +145,7 @@ exports.getPost = asyncHandler(async (req, res) => {
       });
     }
     
+    /*
     // 게시글에 AI 응답이 없고, 자동 생성 설정이 켜져 있다면 생성 시도
     if (!post.aiResponse && process.env.AUTO_GENERATE_AI_RESPONSE === 'true') {
       try {
@@ -166,7 +167,8 @@ exports.getPost = asyncHandler(async (req, res) => {
         // AI 응답 생성에 실패하더라도 게시글은 정상적으로 반환
       }
     }
-
+    */
+    
     // 조회수 증가
     post.viewCount += 1;
     await post.save({ validateBeforeSave: false });
@@ -220,7 +222,53 @@ exports.createPost = asyncHandler(async (req, res) => {
       tags: tagsArray,
       attachments
     });
-    
+
+    /* AI 답변 댓글 생성코드 시작 */
+    if (process.env.AUTO_GENERATE_AI_RESPONSE === 'true') {
+      try {
+        // openAI API 클라이언트 가져오기
+        const OpenAIClient = require('../utils/openai');
+        const openai = new OpenAIClient(process.env.OPENAI_API_KEY);
+
+        // AI 응답 생성
+        const aiResponse = await openai.generateResponse(
+          post.content,
+          post.title,
+          post.categories[0] || '기타',
+          post.tags
+        );
+
+        // AI 시스템 계정 찾기
+        // Username으로 검색하여 유저 수가 많아지면 답변 생성이 느릴 수 있음
+        // 그럴 때엔 검색 조건을 Username이 아닌 유저 고유 토큰값 (DB 참조)로 변경할 것
+        const User = require('../models/User');
+        let aiUser = await User.findOne({ username: 'ai-assistant' });
+
+        if (!aiUser) {
+          console.error('AI 사용자 계정을 찾을 수 없습니다. setupAIUser 스크립트를 실행해주세요.');
+        } else {
+          // AI 댓글 생성
+          const Comment = require('../models/Comment');
+          const aiComment = await Comment.create({
+            content: aiResponse,
+            author: aiUser._id,
+            post: post._id,
+            isAIGenerated: true // AI가 생성한 댓글임을 표시하는 플래그
+          });
+
+          // 게시글에 댓글 ID 추가
+          post.comments.push(aiComment._id);
+          await psot.save();
+
+          console.log('게시글 ${post._id}에 AI 댓글이 자동 생성되었습니다.');
+        }
+      } catch (error) {
+        console.error('AI 댓글 자동 생성 실패: ', error);
+        // AI 댓글 생성에 실패하여도 게시글 생성은 정상적으로 진행됨
+      }
+    }
+    /* AI 답변 댓글 생성코드 종료 */
+
     // 생성된 게시글 반환
     res.status(201).json({
       success: true,

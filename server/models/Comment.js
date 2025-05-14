@@ -134,6 +134,11 @@ const CommentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // AI가 생성한 댓글인지 여부
+    isAIGenerated: {
+      type: Boolean,
+      default: false,
+    }
   },
   {
     timestamps: true,

@@ -179,16 +179,18 @@ exports.updateProfileImage = asyncHandler(async (req, res) => {
 exports.updatePassword = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select('+password');
 
-  // 현재 비밀번호 확인
-  if (!(await user.matchPassword(req.body.currentPassword))) {
-    return res.status(401).json({
+  // 새 비밀번호와 비밀번호 확인이 일치하는지 확인
+  const { newPassword, confirmPassword } = req.body;
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({
       success: false,
-      message: '현재 비밀번호가 일치하지 않습니다'
+      message: '새 비밀번호와 비밀번호 확인이 일치하지 않습니다'
     });
   }
 
   // 새 비밀번호 설정
-  user.password = req.body.newPassword;
+  user.password = newPassword;
   await user.save();
 
   sendTokenResponse(user, 200, res);
