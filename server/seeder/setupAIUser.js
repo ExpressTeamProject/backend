@@ -19,7 +19,7 @@ dotenv.config();
 // AI 사용자 프로필 이미지 URL
 const AI_USERNAME = 'ai-assistant';
 const AI_NICKNAME = 'AI 도우미';
-const AI_EMAIL = 'ai-assistant@system.local';
+const AI_EMAIL = 'ai-assistant@system.com';
 
 async function setupAIUser() {
   try {

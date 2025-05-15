@@ -21,16 +21,24 @@ class OpenAIClient {
    */
   async generateResponse(content, title, category, tags = []) {
     try {
+      // API 키가 설정되어 있는지 확인
+      if (!this.apiKey || this.apiKey === 'your_openai_api_key') {
+        throw new Error('유효한 OpenAI API 키가 설정되지 않았습니다.');
+      }
+
       // 시스템 프롬프트 생성
       const systemPrompt = this.createSystemPrompt(category);
       
       // 사용자 프롬프트 생성
       const userPrompt = this.createUserPrompt(content, title, category, tags);
       
+      console.log('OpenAI API 호출 시작...');
+      
       const response = await axios.post(
         `${this.baseURL}/chat/completions`,
         {
-          model: 'gpt-4',  // 또는 gpt-3.5-turbo
+          // 최신 모델 사용 (변경 가능)
+          model: 'gpt-3.5-turbo', // 접근성이 더 높은 모델로 변경 (gpt-4는 제한적으로 사용 가능)
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
@@ -46,10 +54,35 @@ class OpenAIClient {
         }
       );
 
+      // API 응답 구조 확인 및 디버깅
+      console.log('OpenAI API 응답 성공:', JSON.stringify(response.data).substring(0, 100) + '...');
+      
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('OpenAI API에서 유효한 응답을 받지 못했습니다: ' + JSON.stringify(response.data));
+      }
+
+      // 최신 API에서는 message 구조에서 content를 가져옴
       return response.data.choices[0].message.content;
     } catch (error) {
-      console.error('OpenAI API 호출 중 오류 발생:', error.response?.data || error.message);
-      throw new Error('AI 응답을 생성하는 중 오류가 발생했습니다.');
+      // 오류 응답의 자세한 정보 로깅
+      if (error.response) {
+        // API에서 오류 응답이 온 경우
+        console.error('OpenAI API 오류 응답:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      } else if (error.request) {
+        // 요청은 보냈지만 응답을 받지 못한 경우
+        console.error('OpenAI API 요청 후 응답 없음:', error.request);
+      } else {
+        // 요청 설정 중 오류가 발생한 경우
+        console.error('OpenAI API 요청 설정 오류:', error.message);
+      }
+      
+      // 자세한 오류 정보 포함하여 예외 던지기
+      throw new Error(`AI 응답 생성 중 오류: ${error.message}`);
     }
   }
 

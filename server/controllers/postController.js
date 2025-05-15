@@ -145,7 +145,6 @@ exports.getPost = asyncHandler(async (req, res) => {
       });
     }
     
-    /*
     // 게시글에 AI 응답이 없고, 자동 생성 설정이 켜져 있다면 생성 시도
     if (!post.aiResponse && process.env.AUTO_GENERATE_AI_RESPONSE === 'true') {
       try {
@@ -167,7 +166,6 @@ exports.getPost = asyncHandler(async (req, res) => {
         // AI 응답 생성에 실패하더라도 게시글은 정상적으로 반환
       }
     }
-    */
     
     // 조회수 증가
     post.viewCount += 1;
