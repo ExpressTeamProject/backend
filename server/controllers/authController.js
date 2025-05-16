@@ -262,6 +262,47 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   sendTokenResponse(user, 200, res);
 });
 
+
+// @desc    액세스 토큰 리프레시
+// @route   POST /api/auth/refresh-token
+// @access  Public
+exports.refreshToken = asyncHandler(async (req, res) => {
+  try {
+    // 쿠키 또는 요청 본문에서 리프레시 토큰 가져오기
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: '리프레시 토큰이 제공되지 않았습니다'
+      });
+    }
+
+    // 리프레시 토큰 검증
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    // 해당 사용자 찾기
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: '유효하지 않은 토큰입니다'
+      });
+    }
+
+    // 새 액세스 토큰 생성 및 응답
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    console.error('토큰 리프레시 오류:', error);
+    
+    return res.status(401).json({
+      success: false,
+      message: '유효하지 않은 리프레시 토큰입니다'
+    });
+  }
+});
+
 // 토큰 생성 및 쿠키 설정 헬퍼 함수
 const sendTokenResponse = (user, statusCode, res) => {
   // 토큰 생성

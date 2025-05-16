@@ -354,4 +354,41 @@ router.post('/forgotpassword', authController.forgotPassword);
  */
 router.put('/resetpassword/:resettoken', authController.resetPassword);
 
+/**
+ * @swagger
+ * /auth/refresh-token:
+ *   post:
+ *     summary: 액세스 토큰 리프레시
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: 리프레시 토큰
+ *     responses:
+ *       200:
+ *         description: 토큰 리프레시 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: 유효하지 않은 리프레시 토큰
+ */
+router.post('/refresh-token', authController.refreshToken);
+
 module.exports = router;

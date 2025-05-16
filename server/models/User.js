@@ -142,13 +142,71 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// JWT 토큰 생성 메서드
 UserSchema.methods.getSignedJwtToken = function () {
   return jwt.sign(
     { id: this._id, role: this.role },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE }
   );
+};
+
+// 리프레시 토큰 생성 메서드 (새로 추가)
+UserSchema.methods.getRefreshToken = function () {
+  return jwt.sign(
+    { id: this._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
+  );
+};
+
+// 토큰 생성 및 쿠키 설정 헬퍼 함수
+const sendTokenResponse = (user, statusCode, res) => {
+  // 액세스 토큰 생성
+  const token = user.getSignedJwtToken();
+  
+  // 리프레시 토큰 생성
+  const refreshToken = user.getRefreshToken();
+
+  const accessOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true
+  };
+  
+  const refreshOptions = {
+    expires: new Date(
+      Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRE) * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+    path: '/api/auth/refresh-token'  // 리프레시 토큰 쿠키는 특정 경로에서만 접근 가능
+  };
+
+  // HTTPS인 경우에만 secure 옵션 설정
+  if (process.env.NODE_ENV === 'production') {
+    accessOptions.secure = true;
+    refreshOptions.secure = true;
+  }
+
+  // 필요한 사용자 정보만 응답에 포함
+  const userData = {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    nickname: user.nickname,
+    role: user.role
+  };
+
+  res
+    .status(statusCode)
+    .cookie('token', token, accessOptions)
+    .cookie('refreshToken', refreshToken, refreshOptions)
+    .json({
+      success: true,
+      token,
+      refreshToken,  // 클라이언트에서도 저장할 수 있도록 리프레시 토큰 포함
+      user: userData
+    });
 };
 
 module.exports = mongoose.model('User', UserSchema);
