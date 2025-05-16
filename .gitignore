@@ -65,3 +65,6 @@ pids
 # 업로드된 파일
 uploads/*
 !uploads/.gitkeep
+
+# 설정 파일
+.env

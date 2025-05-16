@@ -433,8 +433,23 @@ exports.deletePost = asyncHandler(async (req, res) => {
   // req.resource는 checkOwnership 미들웨어에서 설정됨
   const post = req.resource;
 
+  // 첨부파일이 있는 경우 파일 시스템에서 삭제
+  if (post.attachments && post.attachments.length > 0) {
+    for (const attachment of post.attachments) {
+      try {
+        const filePath = path.join(process.cwd(), 'uploads/post-attachments', path.basename(attachment.filename));
+        await fs.unlink(filePath);
+      } catch (error) {
+        console.error('파일 삭제 실패:', error.message);
+        // 파일 삭제 실패해도 계속 진행
+      }
+    }
+  }
+
+  // 게시글 관련 댓글 삭제
+  await Comment.deleteMany({ post: post._id });
   // 게시글 삭제
-  await post.remove();
+  await post.deleteOne();
 
   res.status(200).json({
     success: true,
