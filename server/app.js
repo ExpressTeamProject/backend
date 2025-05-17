@@ -15,7 +15,8 @@ const postRoutes = require('./routes/postRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const downloadRoutes = require('./routes/downloadRoutes');
 const aiRoutes = require('./routes/aiRoutes');
-const articleRoutes = require('./routes/articleRoutes'); // 추가: 커뮤니티 게시글 라우트
+const articleRoutes = require('./routes/articleRoutes');
+const savedItemRoutes = require('./routes/savedItemsRoutes');
 
 // 오류 처리 미들웨어
 const { errorHandler } = require('./middleware/errorHandler');
@@ -103,7 +104,8 @@ app.use('/comments', commentRoutes);
 app.use('/api-docs', swaggerConfig.serve, swaggerConfig.setup);
 app.use('/download', downloadRoutes);
 app.use('/ai', aiRoutes);
-app.use('/articles', articleRoutes); // 추가: 커뮤니티 게시글 라우트
+app.use('/articles', articleRoutes);
+app.use('/saved-items', savedItemsRoutes);
 
 // 배포 환경에서는 React 정적 파일 제공
 if (process.env.NODE_ENV === 'production') {

@@ -44,6 +44,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const UserSchema = new mongoose.Schema(
   {
@@ -118,6 +119,29 @@ const UserSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    createdAt : {
+      type: Date,
+      default: Date.now
+    },
+    updatedAt: {
+      type:Date,
+      default: Date.now
+    },
+
+    savedItems: {
+      posts: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Post'
+        }
+      ],
+      articles: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Article'
+        }
+      ]
+    }
   },
   {
     timestamps: true,
@@ -150,7 +174,7 @@ UserSchema.methods.getSignedJwtToken = function () {
   );
 };
 
-// 리프레시 토큰 생성 메서드 (새로 추가)
+// 리프레시 토큰 생성 메서드
 UserSchema.methods.getRefreshToken = function () {
   return jwt.sign(
     { id: this._id },
@@ -207,6 +231,46 @@ const sendTokenResponse = (user, statusCode, res) => {
       refreshToken,  // 클라이언트에서도 저장할 수 있도록 리프레시 토큰 포함
       user: userData
     });
+};
+
+// 게시글 저장 메소드
+UserSchema.methods.toggleSavedItem = async function(itemId, itemType) {
+  // 게시글 타입에 따라 배열 선택
+  const collection = itemType === 'problem' ? 'posts' : 'articles';
+
+  // 배열이 없으면 초기화
+  if (!this.savedItems) {
+    this.savedItems = { posts: [], articles:[] };
+  }
+
+  // 해당 게시글이 이미 저장되어 있는지 확인
+  const index = this.savedItems[collection].indexOf(itemId);
+// 저장 여부 토글
+  if (index === -1) {
+    // 저장되어 있지 않으면 추가
+    this.savedItems[collection].push(itemId);
+    await this.save();
+    return true; // 저장됨
+  } else {
+    // 이미 저장되어 있으면 제거
+    this.savedItems[collection].splice(index, 1);
+    await this.save();
+    return false; // 저장 취소됨
+  }
+};
+
+// 항목 저장 여부 확인 메소드 추가
+UserSchema.methods.isItemSaved = function(itemId, itemType) {
+  // 항목 타입에 따라 배열 선택
+  const collection = itemType === 'problem' ? 'problems' : 'posts';
+  
+  // 배열이 없으면 초기화
+  if (!this.savedItems) {
+    return false;
+  }
+  
+  // 해당 항목이 저장되어 있는지 확인
+  return this.savedItems[collection].some(id => id.toString() === itemId.toString());
 };
 
 module.exports = mongoose.model('User', UserSchema);
