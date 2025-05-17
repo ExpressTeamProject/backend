@@ -132,6 +132,237 @@ router.route('/')
   .get(articleController.getArticles)
   .post(protect, upload.articleAttachment.array('files', 3), articleController.createArticle);
 
+// 정적 라우트를 먼저 배치 (순서 중요)
+/**
+ * @swagger
+ * /articles/search:
+ *   get:
+ *     summary: 커뮤니티 게시글 검색
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 검색어
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: 페이지당 게시글 수
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [질문, 정보, 모집, 후기, 기타]
+ *         description: 카테고리 필터
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *         description: 태그 필터 (쉼표로 구분)
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: ['-createdAt', 'popular', 'comments']
+ *           default: '-createdAt'
+ *         description: 정렬 방식 (최신순, 인기순, 댓글순)
+ *     responses:
+ *       200:
+ *         description: 검색 결과
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 pagination:
+ *                   type: object
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Article'
+ *                 filters:
+ *                   type: object
+ *       400:
+ *         description: 검색어가 없음
+ */
+router.get('/search', articleController.searchArticles);
+
+/**
+ * @swagger
+ * /articles/popular-tags:
+ *   get:
+ *     summary: 인기 태그 목록 가져오기
+ *     tags: [Articles]
+ *     responses:
+ *       200:
+ *         description: 인기 태그 목록
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       tag:
+ *                         type: string
+ *                       count:
+ *                         type: integer
+ */
+router.get('/popular-tags', articleController.getPopularTags);
+
+/**
+ * @swagger
+ * /articles/user/{userId}:
+ *   get:
+ *     summary: 특정 사용자의 커뮤니티 게시글 가져오기
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 사용자 ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: 페이지당 게시글 수
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: ['-createdAt', 'popular', 'comments']
+ *           default: '-createdAt'
+ *         description: 정렬 방식 (최신순, 인기순, 댓글순)
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [질문, 정보, 모집, 후기, 기타]
+ *         description: 카테고리 필터
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *         description: 태그 필터 (쉼표로 구분)
+ *     responses:
+ *       200:
+ *         description: 사용자의 게시글 목록
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 pagination:
+ *                   type: object
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Article'
+ *                 filters:
+ *                   type: object
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ */
+router.get('/user/:userId', articleController.getUserArticles);
+
+/**
+ * @swagger
+ * /articles/category/{category}:
+ *   get:
+ *     summary: 특정 카테고리의 커뮤니티 게시글 가져오기
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [질문, 정보, 모집, 후기, 기타]
+ *         required: true
+ *         description: 카테고리명
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: 페이지당 게시글 수
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: ['-createdAt', 'popular', 'comments']
+ *           default: '-createdAt'
+ *         description: 정렬 방식 (최신순, 인기순, 댓글순)
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *         description: 태그 필터 (쉼표로 구분)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: 카테고리 내 검색어
+ *     responses:
+ *       200:
+ *         description: 카테고리별 게시글 목록
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 pagination:
+ *                   type: object
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Article'
+ *                 filters:
+ *                   type: object
+ */
+router.get('/category/:category', articleController.getCategoryArticles);
+
 /**
  * @swagger
  * /articles/{id}:
@@ -284,236 +515,6 @@ router.route('/:id')
  *         $ref: '#/components/responses/NotFoundError'
  */
 router.put('/:id/like', protect, articleController.toggleLike);
-
-/**
- * @swagger
- * /articles/search:
- *   get:
- *     summary: 커뮤니티 게시글 검색
- *     tags: [Articles]
- *     parameters:
- *       - in: query
- *         name: q
- *         schema:
- *           type: string
- *         required: true
- *         description: 검색어
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: 페이지 번호
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: 페이지당 게시글 수
- *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *           enum: [질문, 정보, 모집, 후기, 기타]
- *         description: 카테고리 필터
- *       - in: query
- *         name: tags
- *         schema:
- *           type: string
- *         description: 태그 필터 (쉼표로 구분)
- *       - in: query
- *         name: sort
- *         schema:
- *           type: string
- *           enum: ['-createdAt', 'popular', 'comments']
- *           default: '-createdAt'
- *         description: 정렬 방식 (최신순, 인기순, 댓글순)
- *     responses:
- *       200:
- *         description: 검색 결과
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
- *                   type: integer
- *                 pagination:
- *                   type: object
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Article'
- *                 filters:
- *                   type: object
- *       400:
- *         description: 검색어가 없음
- */
-router.get('/search', articleController.searchArticles);
-
-/**
- * @swagger
- * /articles/user/{userId}:
- *   get:
- *     summary: 특정 사용자의 커뮤니티 게시글 가져오기
- *     tags: [Articles]
- *     parameters:
- *       - in: path
- *         name: userId
- *         schema:
- *           type: string
- *         required: true
- *         description: 사용자 ID
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: 페이지 번호
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: 페이지당 게시글 수
- *       - in: query
- *         name: sort
- *         schema:
- *           type: string
- *           enum: ['-createdAt', 'popular', 'comments']
- *           default: '-createdAt'
- *         description: 정렬 방식 (최신순, 인기순, 댓글순)
- *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *           enum: [질문, 정보, 모집, 후기, 기타]
- *         description: 카테고리 필터
- *       - in: query
- *         name: tags
- *         schema:
- *           type: string
- *         description: 태그 필터 (쉼표로 구분)
- *     responses:
- *       200:
- *         description: 사용자의 게시글 목록
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
- *                   type: integer
- *                 pagination:
- *                   type: object
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Article'
- *                 filters:
- *                   type: object
- *       404:
- *         description: 사용자를 찾을 수 없음
- */
-router.get('/user/:userId', articleController.getUserArticles);
-
-/**
- * @swagger
- * /articles/category/{category}:
- *   get:
- *     summary: 특정 카테고리의 커뮤니티 게시글 가져오기
- *     tags: [Articles]
- *     parameters:
- *       - in: path
- *         name: category
- *         schema:
- *           type: string
- *           enum: [질문, 정보, 모집, 후기, 기타]
- *         required: true
- *         description: 카테고리명
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: 페이지 번호
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: 페이지당 게시글 수
- *       - in: query
- *         name: sort
- *         schema:
- *           type: string
- *           enum: ['-createdAt', 'popular', 'comments']
- *           default: '-createdAt'
- *         description: 정렬 방식 (최신순, 인기순, 댓글순)
- *       - in: query
- *         name: tags
- *         schema:
- *           type: string
- *         description: 태그 필터 (쉼표로 구분)
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *         description: 카테고리 내 검색어
- *     responses:
- *       200:
- *         description: 카테고리별 게시글 목록
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
- *                   type: integer
- *                 pagination:
- *                   type: object
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Article'
- *                 filters:
- *                   type: object
- */
-router.get('/category/:category', articleController.getCategoryArticles);
-
-/**
- * @swagger
- * /articles/popular-tags:
- *   get:
- *     summary: 인기 태그 목록 가져오기
- *     tags: [Articles]
- *     responses:
- *       200:
- *         description: 인기 태그 목록
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       tag:
- *                         type: string
- *                       count:
- *                         type: integer
- */
-router.get('/popular-tags', articleController.getPopularTags);
 
 /**
  * @swagger
