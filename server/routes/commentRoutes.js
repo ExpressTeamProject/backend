@@ -21,12 +21,15 @@ const upload = require('../utils/fileUpload');
  *             type: object
  *             required:
  *               - content
- *               - postId
  *             properties:
  *               content:
  *                 type: string
  *               postId:
  *                 type: string
+ *                 description: 문제 게시글 ID (postId 또는 articleId 중 하나 필수)
+ *               articleId:
+ *                 type: string
+ *                 description: 커뮤니티 게시글 ID (postId 또는 articleId 중 하나 필수)
  *               files:
  *                 type: array
  *                 items:
@@ -175,7 +178,7 @@ router.route('/:id')
  * @swagger
  * /comments/post/{postId}:
  *   get:
- *     summary: 게시글별 댓글 가져오기
+ *     summary: 문제 게시글별 댓글 가져오기
  *     tags: [Comments]
  *     parameters:
  *       - in: path
@@ -183,7 +186,7 @@ router.route('/:id')
  *         schema:
  *           type: string
  *         required: true
- *         description: 게시글 ID
+ *         description: 문제 게시글 ID
  *       - in: query
  *         name: page
  *         schema:
@@ -218,6 +221,54 @@ router.route('/:id')
  *         description: 게시글을 찾을 수 없음
  */
 router.get('/post/:postId', commentController.getPostComments);
+
+/**
+ * @swagger
+ * /comments/article/{articleId}:
+ *   get:
+ *     summary: 커뮤니티 게시글별 댓글 가져오기
+ *     tags: [Comments]
+ *     parameters:
+ *       - in: path
+ *         name: articleId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 커뮤니티 게시글 ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 페이지당 댓글 수
+ *     responses:
+ *       200:
+ *         description: 게시글의 댓글 목록
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 pagination:
+ *                   type: object
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Comment'
+ *       404:
+ *         description: 게시글을 찾을 수 없음
+ */
+router.get('/article/:articleId', commentController.getArticleComments);
 
 /**
  * @swagger

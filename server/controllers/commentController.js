@@ -1,5 +1,7 @@
+
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const Article = require('../models/Article');
 const { asyncHandler } = require('../middleware/errorHandler');
 const path = require('path');
 const fs = require('fs').promises;
@@ -8,12 +10,30 @@ const fs = require('fs').promises;
 // @route   POST /api/comments
 // @access  Private
 exports.createComment = asyncHandler(async (req, res) => {
-  const { content, postId } = req.body;
+  const { content, postId, articleId } = req.body;
 
-  // 게시글 존재 여부 확인
-  const post = await Post.findById(postId);
+  // 게시글 타입 확인 및 존재 여부 확인
+  let targetModel, targetId, targetField;
   
-  if (!post) {
+  if (postId) {
+    targetModel = Post;
+    targetId = postId;
+    targetField = 'post';
+  } else if (articleId) {
+    targetModel = Article;
+    targetId = articleId;
+    targetField = 'article';
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: '게시글 ID(postId) 또는 커뮤니티 게시글 ID(articleId)가 필요합니다'
+    });
+  }
+  
+  // 대상 게시글 찾기
+  const target = await targetModel.findById(targetId);
+  
+  if (!target) {
     return res.status(404).json({
       success: false,
       message: '게시글을 찾을 수 없습니다'
@@ -29,17 +49,21 @@ exports.createComment = asyncHandler(async (req, res) => {
     size: file.size
   })) : [];
 
-  // 댓글 생성
-  const comment = await Comment.create({
+  // 댓글 생성 (동적으로 필드 설정)
+  const commentData = {
     content,
     author: req.user.id,
-    post: postId,
     attachments
-  });
+  };
+  
+  // 동적으로 필드 추가 (post 또는 article)
+  commentData[targetField] = targetId;
+  
+  const comment = await Comment.create(commentData);
 
   // 게시글에 댓글 ID 추가
-  post.comments.push(comment._id);
-  await post.save();
+  target.comments.push(comment._id);
+  await target.save();
 
   // author 정보 채우기
   await comment.populate({
@@ -152,12 +176,22 @@ exports.deleteComment = asyncHandler(async (req, res) => {
   await comment.save();
 
   // 게시글에서 댓글 ID 제거
-  const post = await Post.findById(comment.post);
-  if (post) {
-    post.comments = post.comments.filter(
-      (id) => id.toString() !== comment._id.toString()
-    );
-    await post.save();
+  if (comment.post) {
+    const post = await Post.findById(comment.post);
+    if (post) {
+      post.comments = post.comments.filter(
+        (id) => id.toString() !== comment._id.toString()
+      );
+      await post.save();
+    }
+  } else if (comment.article) {
+    const article = await Article.findById(comment.article);
+    if (article) {
+      article.comments = article.comments.filter(
+        (id) => id.toString() !== comment._id.toString()
+      );
+      await article.save();
+    }
   }
 
   res.status(200).json({
@@ -223,6 +257,63 @@ exports.getPostComments = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    커뮤니티 게시글별 댓글 가져오기
+// @route   GET /api/comments/article/:articleId
+// @access  Public
+exports.getArticleComments = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 20 } = req.query;
+
+  // 게시글 존재 여부 확인
+  const article = await Article.findById(req.params.articleId);
+  
+  if (!article) {
+    return res.status(404).json({
+      success: false,
+      message: '게시글을 찾을 수 없습니다'
+    });
+  }
+
+  const startIndex = (parseInt(page) - 1) * parseInt(limit);
+  const total = await Comment.countDocuments({ 
+    article: req.params.articleId,
+    parent: null // 최상위 댓글만 계산
+  });
+
+  // 최상위 댓글만 가져오기
+  const comments = await Comment.find({ 
+    article: req.params.articleId,
+    parent: null
+  })
+    .sort('createdAt')
+    .skip(startIndex)
+    .limit(parseInt(limit))
+    .populate({
+      path: 'author',
+      select: 'username nickname profileImage'
+    })
+    .populate({
+      path: 'replies',
+      populate: {
+        path: 'author',
+        select: 'username nickname profileImage'
+      }
+    });
+
+  // 페이지네이션 정보
+  const pagination = {
+    totalPages: Math.ceil(total / parseInt(limit)),
+    currentPage: parseInt(page),
+    totalResults: total
+  };
+
+  res.status(200).json({
+    success: true,
+    count: comments.length,
+    pagination,
+    data: comments
+  });
+});
+
 // @desc    대댓글 작성
 // @route   POST /api/comments/reply/:commentId
 // @access  Private
@@ -249,19 +340,35 @@ exports.createReply = asyncHandler(async (req, res) => {
     size: file.size
   })) : [];
 
-  // 대댓글 생성
-  const reply = await Comment.create({
+  // 대댓글 생성 - 부모 댓글이 속한 게시글 타입에 따라 필드 설정
+  const replyData = {
     content,
     author: req.user.id,
-    post: parentComment.post,
     parent: commentId,
     attachments
-  });
+  };
 
-  // 게시글에 댓글 ID 추가
-  const post = await Post.findById(parentComment.post);
-  post.comments.push(reply._id);
-  await post.save();
+  // 부모 댓글이 속한 게시글 타입에 따라 필드 설정
+  if (parentComment.post) {
+    replyData.post = parentComment.post;
+  } else if (parentComment.article) {
+    replyData.article = parentComment.article;
+  }
+
+  const reply = await Comment.create(replyData);
+
+  // 대상 게시글 찾기 및 댓글 ID 추가
+  let target;
+  if (parentComment.post) {
+    target = await Post.findById(parentComment.post);
+  } else if (parentComment.article) {
+    target = await Article.findById(parentComment.article);
+  }
+
+  if (target) {
+    target.comments.push(reply._id);
+    await target.save();
+  }
 
   // author 정보 채우기
   await reply.populate({

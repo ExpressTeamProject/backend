@@ -91,7 +91,10 @@ const CommentSchema = new mongoose.Schema(
     post: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Post',
-      required: true,
+    },
+    article: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Article',
     },
     parent: {
       type: mongoose.Schema.Types.ObjectId,
@@ -146,6 +149,16 @@ const CommentSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+// 유효성 검사
+// post나 article 중 하나는 반드시 있어야 함
+CommentSchema.pre('validate', function(next) {
+  if (!this.post && !this.article) {
+    next(new Error('댓글은 post 또는 article에 속해야 합니다.'));
+  } else {
+    next();
+  }
+});
 
 // 가상 필드: 좋아요 수
 CommentSchema.virtual('likeCount').get(function () {
