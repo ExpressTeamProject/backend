@@ -790,17 +790,16 @@ router.delete(
   postController.removeAttachment
 );
 
+
 /**
  * @swagger
  * /posts/upload-image:
  *   post:
  *     summary: 마크다운 에디터용 이미지 업로드
- *     description: 마크다운 에디터에서 사용할 이미지를 업로드합니다. 업로드된 이미지 URL을 반환합니다.
+ *     description: 마크다운 에디터에서 사용할 이미지를 업로드합니다.
  *     tags: [Posts]
  *     security:
  *       - bearerAuth: []
- *     consumes:
- *       - multipart/form-data
  *     requestBody:
  *       required: true
  *       content:
@@ -813,7 +812,7 @@ router.delete(
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 업로드할 이미지 파일 (5MB 이하, 이미지 형식만 허용)
+ *                 description: 업로드할 이미지 파일 (5MB 이하)
  *     responses:
  *       200:
  *         description: 이미지 업로드 성공
@@ -831,10 +830,10 @@ router.delete(
  *                   example: "/uploads/post-images/image_1234567890.jpg"
  *                 filename:
  *                   type: string
- *                   description: 저장된 파일명
+ *                   description: 서버에 저장된 파일명
  *                   example: "image_1234567890.jpg"
  *       400:
- *         description: 잘못된 요청 (이미지 없음 또는 잘못된 형식)
+ *         description: 잘못된 요청 (이미지 누락 또는 형식 오류)
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */

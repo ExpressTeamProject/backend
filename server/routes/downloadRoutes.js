@@ -13,7 +13,7 @@ const Article = require('../models/Article'); // 추가: Article 모델 가져�
  * /download/attachment/{filename}:
  *   get:
  *     summary: 게시글 첨부파일 다운로드
- *     description: 게시글의 첨부파일을 다운로드합니다. 파일명을 통해 원본 파일을 찾아 다운로드합니다.
+ *     description: 문제 게시글(Post)의 첨부파일을 다운로드합니다.
  *     tags: [Downloads]
  *     parameters:
  *       - in: path
@@ -79,7 +79,7 @@ router.get(
  * /download/comment-attachment/{filename}:
  *   get:
  *     summary: 댓글 첨부파일 다운로드
- *     description: 댓글의 첨부파일을 다운로드합니다. 파일명을 통해 원본 파일을 찾아 다운로드합니다.
+ *     description: 댓글의 첨부파일을 다운로드합니다.
  *     tags: [Downloads]
  *     parameters:
  *       - in: path
@@ -145,7 +145,7 @@ router.get(
  * /download/article-attachment/{filename}:
  *   get:
  *     summary: 커뮤니티 게시글 첨부파일 다운로드
- *     description: 커뮤니티 게시글의 첨부파일을 다운로드합니다. 파일명을 통해 원본 파일을 찾아 다운로드합니다.
+ *     description: 커뮤니티 게시글(Article)의 첨부파일을 다운로드합니다.
  *     tags: [Downloads]
  *     parameters:
  *       - in: path

@@ -19,8 +19,21 @@
  *          type: string
  *          description: 게시글 내용
  *        author:
- *          type: string
- *          description: 작성자 ID
+ *          type: object
+ *          description: 작성자 정보
+ *          properties:
+ *            id:
+ *              type: string
+ *              description: 작성자 ID
+ *            username:
+ *              type: string
+ *              description: 작성자 아이디
+ *            nickname:
+ *              type: string
+ *              description: 작성자 닉네임
+ *            profileImage:
+ *              type: string
+ *              description: 작성자 프로필 이미지
  *        categories:
  *          type: array
  *          items:
@@ -56,9 +69,6 @@
  *                type: string
  *                format: date-time
  *                description: 업로드 일시
- *        imageUrl:
- *          type: string
- *          description: 이미지 URL
  *        viewCount:
  *          type: integer
  *          description: 조회수
@@ -67,14 +77,27 @@
  *          items:
  *            type: string
  *          description: 좋아요한 사용자 ID 목록
+ *        likeCount:
+ *          type: integer
+ *          description: 좋아요 수 (가상 필드)
  *        comments:
  *          type: array
  *          items:
  *            type: string
  *          description: 댓글 ID 목록
+ *        commentCount:
+ *          type: integer
+ *          description: 댓글 수 (가상 필드)
  *        isSolved:
  *          type: boolean
  *          description: 게시글 해결 여부
+ *        aiResponse:
+ *          type: string
+ *          description: AI가 생성한 응답
+ *        aiResponseCreatedAt:
+ *          type: string
+ *          format: date-time
+ *          description: AI 응답 생성 시간
  *        createdAt:
  *          type: string
  *          format: date-time
@@ -83,6 +106,20 @@
  *          type: string
  *          format: date-time
  *          description: 수정 시간
+ *      example:
+ *        title: 미분방정식 문제 질문
+ *        content: "다음 미분방정식의 일반해를 구하는 방법을 알려주세요: y'' - 4y' + 4y = 0"
+ *        categories: [수학]
+ *        author:
+ *          id: 60d0fe4f5311236168a109ca
+ *          username: user1
+ *          nickname: 수학러버
+ *          profileImage: /uploads/profile-images/default.jpg
+ *        tags: [미분방정식, 수학문제]
+ *        viewCount: 8
+ *        likeCount: 3
+ *        commentCount: 2
+ *        isSolved: false
  */
 
 // models/Post.js

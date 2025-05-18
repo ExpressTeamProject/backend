@@ -28,10 +28,12 @@ const { protect } = require('../middleware/auth');
  *                   properties:
  *                     posts:
  *                       type: array
+ *                       description: 저장된 문제 게시글(Post) 목록
  *                       items:
  *                         $ref: '#/components/schemas/Post'
  *                     articles:
  *                       type: array
+ *                       description: 저장된 커뮤니티 게시글(Article) 목록
  *                       items:
  *                         $ref: '#/components/schemas/Article'
  *       401:

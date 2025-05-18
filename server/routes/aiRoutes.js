@@ -17,6 +17,7 @@ const Post = require('../models/Post');
  * /ai/generate/{postId}:
  *   post:
  *     summary: 게시글에 AI 응답 생성
+ *     description: 게시글 내용을 분석하여 AI 응답을 생성합니다.
  *     tags: [AI]
  *     security:
  *       - bearerAuth: []
@@ -46,7 +47,7 @@ const Post = require('../models/Post');
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       404:
- *         $ref: '#/components/responses/NotFoundError'
+ *         description: 게시글을 찾을 수 없음
  */
 router.post('/generate/:postId', protect, aiController.generateAIResponse);
 
@@ -55,6 +56,7 @@ router.post('/generate/:postId', protect, aiController.generateAIResponse);
  * /ai/response/{postId}:
  *   delete:
  *     summary: 게시글의 AI 응답 삭제
+ *     description: 게시글에 저장된 AI 응답을 삭제합니다.
  *     tags: [AI]
  *     security:
  *       - bearerAuth: []
@@ -82,7 +84,7 @@ router.post('/generate/:postId', protect, aiController.generateAIResponse);
  *       403:
  *         $ref: '#/components/responses/ForbiddenError'
  *       404:
- *         $ref: '#/components/responses/NotFoundError'
+ *         description: 게시글을 찾을 수 없음
  */
 router.delete('/response/:postId', protect, aiController.deleteAIResponse);
 

@@ -7,7 +7,6 @@
  *      required:
  *        - content
  *        - author
- *        - post
  *      properties:
  *        id:
  *          type: string
@@ -16,11 +15,27 @@
  *          type: string
  *          description: 댓글 내용
  *        author:
- *          type: string
- *          description: 작성자 ID
+ *          type: object
+ *          description: 작성자 정보
+ *          properties:
+ *            id:
+ *              type: string
+ *              description: 작성자 ID
+ *            username:
+ *              type: string
+ *              description: 작성자 아이디
+ *            nickname:
+ *              type: string
+ *              description: 작성자 닉네임
+ *            profileImage:
+ *              type: string
+ *              description: 작성자 프로필 이미지
  *        post:
  *          type: string
- *          description: 게시글 ID
+ *          description: 연결된 문제 게시글 ID (post 또는 article 중 하나만 설정)
+ *        article:
+ *          type: string
+ *          description: 연결된 커뮤니티 게시글 ID (post 또는 article 중 하나만 설정)
  *        parent:
  *          type: string
  *          description: 부모 댓글 ID (대댓글인 경우)
@@ -48,15 +63,25 @@
  *                type: string
  *                format: date-time
  *                description: 업로드 일시
- *          description: 첨부파일 목록
  *        likes:
  *          type: array
  *          items:
  *            type: string
  *          description: 좋아요한 사용자 ID 목록
+ *        likeCount:
+ *          type: integer
+ *          description: 좋아요 수 (가상 필드)
  *        isDeleted:
  *          type: boolean
  *          description: 삭제 여부
+ *        isAIGenerated:
+ *          type: boolean
+ *          description: AI가 생성한 댓글인지 여부
+ *        replies:
+ *          type: array
+ *          items:
+ *            $ref: '#/components/schemas/Comment'
+ *          description: 대댓글 목록 (가상 필드)
  *        createdAt:
  *          type: string
  *          format: date-time
@@ -67,10 +92,15 @@
  *          description: 수정 시간
  *      example:
  *        content: 좋은 게시글입니다!
- *        author: 60d0fe4f5311236168a109ca
+ *        author:
+ *          id: 60d0fe4f5311236168a109ca
+ *          username: user1
+ *          nickname: 수학러버
+ *          profileImage: /uploads/profile-images/default.jpg
  *        post: 60d0fe4f5311236168a109cb
  *        likes: []
  *        isDeleted: false
+ *        likeCount: 0
  */
 
 const mongoose = require('mongoose');

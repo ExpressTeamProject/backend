@@ -21,8 +21,21 @@ const mongoose = require('mongoose');
  *           type: string
  *           description: 게시글 내용
  *         author:
- *           type: string
- *           description: 작성자 ID
+ *           type: object
+ *           description: 작성자 정보
+ *           properties:
+ *             id:
+ *               type: string
+ *               description: 작성자 ID
+ *             username:
+ *               type: string
+ *               description: 작성자 아이디
+ *             nickname:
+ *               type: string
+ *               description: 작성자 닉네임
+ *             profileImage:
+ *               type: string
+ *               description: 작성자 프로필 이미지
  *         category:
  *           type: string
  *           enum: [질문, 정보, 모집, 후기, 기타]
@@ -64,11 +77,17 @@ const mongoose = require('mongoose');
  *           items:
  *             type: string
  *           description: 좋아요한 사용자 ID 목록
+ *         likeCount:
+ *           type: integer
+ *           description: 좋아요 수 (가상 필드)
  *         comments:
  *           type: array
  *           items:
  *             type: string
  *           description: 댓글 ID 목록
+ *         commentCount:
+ *           type: integer
+ *           description: 댓글 수 (가상 필드)
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -81,11 +100,15 @@ const mongoose = require('mongoose');
  *         title: 미분방정식 공부 방법 추천해주세요
  *         content: 미분방정식을 독학하고 있는데 좋은 교재나 온라인 강의 추천 부탁드립니다.
  *         category: 질문
- *         author: 60d0fe4f5311236168a109ca
+ *         author:
+ *           id: 60d0fe4f5311236168a109ca
+ *           username: user1
+ *           nickname: 수학러버
+ *           profileImage: /uploads/profile-images/default.jpg
  *         tags: [수학, 미분방정식, 독학]
  *         viewCount: 8
- *         likes: []
- *         comments: []
+ *         likeCount: 5
+ *         commentCount: 3
  */
 
 /**

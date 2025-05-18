@@ -49,8 +49,30 @@
  *               description: Twitter 프로필 URL
  *         role:
  *           type: string
- *           enum: [user, admin]
+ *           enum: [user, admin, system]
  *           description: 사용자 권한
+ *         savedItems:
+ *           type: object
+ *           description: 사용자가 저장한 항목들
+ *           properties:
+ *             posts:
+ *               type: array
+ *               description: 저장된 문제 게시글(Post) ID 목록
+ *               items:
+ *                 type: string
+ *             articles:
+ *               type: array
+ *               description: 저장된 커뮤니티 게시글(Article) ID 목록
+ *               items:
+ *                 type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: 계정 생성 시간
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: 계정 정보 마지막 업데이트 시간
  *       example:
  *         username: test_user
  *         email: user@example.com
@@ -64,6 +86,9 @@
  *           github: https://github.com/testuser
  *           twitter: https://twitter.com/testuser
  *         role: user
+ *         savedItems:
+ *           posts: ["60d9f3a5b8e1a82e4c8a4321"]
+ *           articles: ["60d9f3a5b8e1a82e4c8a5678"]
  */
 
 const mongoose = require('mongoose');
