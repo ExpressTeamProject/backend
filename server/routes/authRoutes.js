@@ -164,16 +164,29 @@ router.get('/me', protect, authController.getMe);
  *             properties:
  *               nickname:
  *                 type: string
+ *                 description: 사용자 닉네임
  *               email:
  *                 type: string
- *               username:
+ *                 description: 사용자 이메일
+ *               bio:
  *                 type: string
- *               githubUrl:
+ *                 description: 자기소개 (최대 500자)
+ *               major:
  *                 type: string
- *                 description: Github 프로필 URL (선택사항)
- *               snsUrl:
+ *                 enum: [수학, 물리학, 화학, 생물학, 컴퓨터공학, 전자공학, 기계공학, 경영학, 경제학, 심리학, 사회학, 기타]
+ *                 description: 전공 분야
+ *               website:
  *                 type: string
- *                 description: SNS URL (선택사항)
+ *                 description: 개인 웹사이트 URL
+ *               socialLinks:
+ *                 type: object
+ *                 properties:
+ *                   github:
+ *                     type: string
+ *                     description: Github 프로필 URL
+ *                   twitter:
+ *                     type: string
+ *                     description: Twitter 프로필 URL
  *     responses:
  *       200:
  *         description: 정보 업데이트 성공

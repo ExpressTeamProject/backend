@@ -1,44 +1,69 @@
 /**
  * @swagger
  * components:
- *  schemas:
- *    User:
- *      type: object
- *      required:
- *        - username
- *        - email
- *        - password
- *        - nickname
- *      properties:
- *        id:
- *          type: string
- *          description: 사용자 ID
- *        username:
- *          type: string
- *          description: 사용자 이름 (3-20자)
- *        email:
- *          type: string
- *          description: 사용자 이메일
- *        password:
- *          type: string
- *          description: 사용자 비밀번호 (최소 6자)
- *        nickname:
- *          type: string
- *          description: 사용자 닉네임 (최대 30자)
- *        profileImage:
- *          type: string
- *          description: 프로필 이미지 URL
- *        role:
- *          type: string
- *          enum: [user, admin]
- *          description: 사용자 권한
- *      example:
- *        username: test_user
- *        email: user@example.com
- *        password: password123
- *        nickname: 테스터
- *        profileImage: default-profile.jpg
- *        role: user
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - username
+ *         - email
+ *         - password
+ *         - nickname
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: 사용자 ID
+ *         username:
+ *           type: string
+ *           description: 사용자 이름 (3-20자)
+ *         email:
+ *           type: string
+ *           description: 사용자 이메일
+ *         password:
+ *           type: string
+ *           description: 사용자 비밀번호 (최소 6자)
+ *         nickname:
+ *           type: string
+ *           description: 사용자 닉네임 (최대 30자)
+ *         profileImage:
+ *           type: string
+ *           description: 프로필 이미지 URL
+ *         bio:
+ *           type: string
+ *           description: 자기소개 (최대 500자)
+ *         major:
+ *           type: string
+ *           enum: [수학, 물리학, 화학, 생물학, 컴퓨터공학, 전자공학, 기계공학, 경영학, 경제학, 심리학, 사회학, 기타]
+ *           description: 전공 분야
+ *         website:
+ *           type: string
+ *           description: 개인 웹사이트 URL
+ *         socialLinks:
+ *           type: object
+ *           properties:
+ *             github:
+ *               type: string
+ *               description: Github 프로필 URL
+ *             twitter:
+ *               type: string
+ *               description: Twitter 프로필 URL
+ *         role:
+ *           type: string
+ *           enum: [user, admin]
+ *           description: 사용자 권한
+ *       example:
+ *         username: test_user
+ *         email: user@example.com
+ *         password: password123
+ *         nickname: 테스터
+ *         profileImage: default-profile.jpg
+ *         bio: 안녕하세요, 테스트 사용자입니다.
+ *         major: 컴퓨터공학
+ *         website: https://mywebsite.com
+ *         socialLinks:
+ *           github: https://github.com/testuser
+ *           twitter: https://twitter.com/testuser
+ *         role: user
  */
 
 const mongoose = require('mongoose');
