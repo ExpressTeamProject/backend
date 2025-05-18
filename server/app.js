@@ -105,7 +105,7 @@ app.use('/api-docs', swaggerConfig.serve, swaggerConfig.setup);
 app.use('/download', downloadRoutes);
 app.use('/ai', aiRoutes);
 app.use('/articles', articleRoutes);
-app.use('/saved-items', savedItemsRoutes);
+app.use('/user/saved-items', savedItemsRoutes);
 
 // 배포 환경에서는 React 정적 파일 제공
 if (process.env.NODE_ENV === 'production') {

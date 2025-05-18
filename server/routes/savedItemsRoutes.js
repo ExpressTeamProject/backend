@@ -1,4 +1,4 @@
-// server/routes/savedItemsRoutes.js
+// routes/savedItemsRoutes.js
 
 const express = require('express');
 const router = express.Router();
@@ -26,11 +26,11 @@ const { protect } = require('../middleware/auth');
  *                 data:
  *                   type: object
  *                   properties:
- *                     problems:
+ *                     posts:
  *                       type: array
  *                       items:
  *                         $ref: '#/components/schemas/Post'
- *                     posts:
+ *                     articles:
  *                       type: array
  *                       items:
  *                         $ref: '#/components/schemas/Article'
@@ -64,8 +64,8 @@ router.get('/', protect, savedItemsController.getSavedItems);
  *                 description: 저장할 항목의 ID
  *               itemType:
  *                 type: string
- *                 enum: [problem, post]
- *                 description: 항목 유형 (problem 또는 post)
+ *                 enum: [post, article]
+ *                 description: 항목 유형 (post 또는 article)
  *     responses:
  *       200:
  *         description: 저장 상태 토글 성공
@@ -109,9 +109,9 @@ router.post('/toggle', protect, savedItemsController.toggleSavedItem);
  *         name: itemType
  *         schema:
  *           type: string
- *           enum: [problem, post]
+ *           enum: [post, article]
  *         required: true
- *         description: 항목 유형 (problem 또는 post)
+ *         description: 항목 유형 (post 또는 article)
  *     responses:
  *       200:
  *         description: 저장 여부 확인 성공

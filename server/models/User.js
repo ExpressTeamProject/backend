@@ -236,7 +236,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 // 게시글 저장 메소드
 UserSchema.methods.toggleSavedItem = async function(itemId, itemType) {
   // 게시글 타입에 따라 배열 선택
-  const collection = itemType === 'problem' ? 'posts' : 'articles';
+  const collection = itemType === 'post' ? 'posts' : 'articles';
 
   // 배열이 없으면 초기화
   if (!this.savedItems) {
@@ -244,7 +244,7 @@ UserSchema.methods.toggleSavedItem = async function(itemId, itemType) {
   }
 
   // 해당 게시글이 이미 저장되어 있는지 확인
-  const index = this.savedItems[collection].indexOf(itemId);
+  const index = this.savedItems[collection].findIndex(id => id.toString() === itemId.toString());
 // 저장 여부 토글
   if (index === -1) {
     // 저장되어 있지 않으면 추가
@@ -262,7 +262,7 @@ UserSchema.methods.toggleSavedItem = async function(itemId, itemType) {
 // 항목 저장 여부 확인 메소드 추가
 UserSchema.methods.isItemSaved = function(itemId, itemType) {
   // 항목 타입에 따라 배열 선택
-  const collection = itemType === 'problem' ? 'problems' : 'posts';
+  const collection = itemType === 'post' ? 'posts' : 'articles';
   
   // 배열이 없으면 초기화
   if (!this.savedItems) {

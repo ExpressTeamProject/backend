@@ -1,4 +1,4 @@
-// server/controllers/savedItemsController.js
+// controllers/savedItemsController.js
 
 const User = require('../models/User');
 const Post = require('../models/Post');
@@ -11,7 +11,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
  * @access  Private
  */
 exports.getSavedItems = asyncHandler(async (req, res) => {
-  // 사용자 찾기 (저장된 항목 필드 포함)
+  // 사용자 찾기
   const user = await User.findById(req.user.id);
 
   if (!user) {
@@ -21,17 +21,22 @@ exports.getSavedItems = asyncHandler(async (req, res) => {
     });
   }
 
-  // 저장된 문제 조회
-  const savedProblems = await Post.find({
-    _id: { $in: user.savedItems?.problems || [] }
+  // savedItems가 없으면 초기화
+  if (!user.savedItems) {
+    user.savedItems = { posts: [], articles: [] };
+  }
+
+  // 저장된 문제 게시글(Post) 조회
+  const savedPosts = await Post.find({
+    _id: { $in: user.savedItems.posts || [] }
   }).populate({
     path: 'author',
     select: 'username nickname profileImage'
   });
 
-  // 저장된 게시글 조회
-  const savedPosts = await Article.find({
-    _id: { $in: user.savedItems?.posts || [] }
+  // 저장된 커뮤니티 게시글(Article) 조회
+  const savedArticles = await Article.find({
+    _id: { $in: user.savedItems.articles || [] }
   }).populate({
     path: 'author',
     select: 'username nickname profileImage'
@@ -40,8 +45,8 @@ exports.getSavedItems = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     data: {
-      problems: savedProblems,
-      posts: savedPosts
+      posts: savedPosts,       // 문제 게시글(Post)
+      articles: savedArticles  // 커뮤니티 게시글(Article)
     }
   });
 });
@@ -55,10 +60,10 @@ exports.toggleSavedItem = asyncHandler(async (req, res) => {
   const { itemId, itemType } = req.body;
 
   // 입력값 검증
-  if (!itemId || !['problem', 'post'].includes(itemType)) {
+  if (!itemId || !['post', 'article'].includes(itemType)) {
     return res.status(400).json({
       success: false,
-      message: '유효하지 않은 요청입니다. itemId와 itemType(problem 또는 post)이 필요합니다.'
+      message: '유효하지 않은 요청입니다. itemId와 itemType(post 또는 article)이 필요합니다.'
     });
   }
 
@@ -73,7 +78,7 @@ exports.toggleSavedItem = asyncHandler(async (req, res) => {
   }
 
   // 항목이 존재하는지 확인
-  const model = itemType === 'problem' ? Post : Article;
+  const model = itemType === 'post' ? Post : Article;
   const item = await model.findById(itemId);
 
   if (!item) {
@@ -102,10 +107,10 @@ exports.checkSavedItem = asyncHandler(async (req, res) => {
   const { itemId, itemType } = req.query;
 
   // 입력값 검증
-  if (!itemId || !['problem', 'post'].includes(itemType)) {
+  if (!itemId || !['post', 'article'].includes(itemType)) {
     return res.status(400).json({
       success: false,
-      message: '유효하지 않은 요청입니다. itemId와 itemType(problem 또는 post)이 필요합니다.'
+      message: '유효하지 않은 요청입니다. itemId와 itemType(post 또는 article)이 필요합니다.'
     });
   }
 
